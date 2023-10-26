@@ -6,6 +6,8 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,11 +50,16 @@ fun EasyCameraScreen(
     var lensId by remember {
         mutableStateOf(cameraX.cameraSelector)
     }
+    val shutterInteractionSource = remember { MutableInteractionSource() }
+    val isShutterPressed by shutterInteractionSource.collectIsPressedAsState()
+    val shutterButtonColor = if (isShutterPressed) Color.DarkGray else Color.White
+
     val scaffoldState = rememberBottomSheetScaffoldState()
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetPeekHeight = 0.dp,
         sheetContent = {
+
 
         }
     ) { padding ->
@@ -82,7 +89,6 @@ fun EasyCameraScreen(
                         shape = CircleShape,
                         border= BorderStroke(1.dp, Color.White),
                         contentPadding = PaddingValues(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor =  Color.White)
                     ) {
                         Icon(Icons.Default.HideImage, contentDescription = "Access gallery", tint = Color.White, modifier = Modifier.size(54.dp))
                     }
@@ -94,9 +100,9 @@ fun EasyCameraScreen(
                         shape = CircleShape,
                         border= BorderStroke(4.dp, Color.White),
                         contentPadding = PaddingValues(4.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor =  Color.White)
+                        interactionSource = shutterInteractionSource
                     ) {
-                        Icon(Icons.Default.Brightness1, contentDescription = "Shutter button", tint = Color.White, modifier = Modifier.size(80.dp))
+                        Icon(Icons.Default.Brightness1, contentDescription = "Shutter button", tint = shutterButtonColor, modifier = Modifier.size(80.dp))
                     }
                     OutlinedButton(
                         onClick = {
@@ -108,9 +114,8 @@ fun EasyCameraScreen(
                         shape = CircleShape,
                         border= BorderStroke(1.dp, Color.White),
                         contentPadding = PaddingValues(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor =  Color.White)
                     ) {
-                        Icon(Icons.Default.Cached, contentDescription = "Swap camera", tint = Color.White, modifier = Modifier.size(54.dp))
+                        Icon(Icons.Default.Cached, contentDescription = "Switch camera", tint = Color.White, modifier = Modifier.size(54.dp))
                     }
                 }
             }
