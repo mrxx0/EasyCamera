@@ -4,12 +4,20 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.mrxx0.easycamera.presentation.view.MainView
 import com.mrxx0.easycamera.ui.theme.EasyCameraTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,11 +27,13 @@ class MainActivity : ComponentActivity() {
             )
         }
         setContent {
-
-            val cameraX = CameraX(LocalContext.current, LocalLifecycleOwner.current)
             EasyCameraTheme {
-                cameraX.startCameraPreview()
-                EasyCameraScreen(cameraX)
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = Color.Black
+                ) {
+                    MainView()
+                }
             }
         }
     }
