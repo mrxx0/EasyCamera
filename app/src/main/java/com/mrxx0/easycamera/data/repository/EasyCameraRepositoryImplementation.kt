@@ -1,69 +1,78 @@
-package com.mrxx0.easycamera
+package com.mrxx0.easycamera.data.repository
 
-import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import com.mrxx0.easycamera.domain.repository.EasyCameraRepository
 import java.text.SimpleDateFormat
 import java.util.Locale
+import javax.inject.Inject
 
-class CameraX (
-    private val context: Context,
-    private val lifecycleOwner: LifecycleOwner,
-) {
-    val previewViewTest = PreviewView(context)
-    var cameraSelector by mutableStateOf(CameraSelector.DEFAULT_BACK_CAMERA)
-    private lateinit var imageCapture: ImageCapture
-    private lateinit var preview: Preview
+class EasyCameraRepositoryImplementation @Inject constructor(
+    private val cameraProvider: ProcessCameraProvider,
+    private var cameraSelector: CameraSelector,
+    private val cameraPreview: Preview,
+    private val imageCapture: ImageCapture,
+    private val imageAnalysis: ImageAnalysis,
+):EasyCameraRepository {
+    
+    override suspend fun showCameraPreview(
+        previewView: PreviewView,
+        lifecycleOwner: LifecycleOwner
+    ) {
+        cameraPreview.setSurfaceProvider(previewView.surfaceProvider)
+        try {
+            cameraProvider.unbindAll()
+            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                cameraPreview,
+                imageCapture,
+                imageAnalysis
+            )
+        } catch (e: Exception){
+            e.printStackTrace()
+        }
+    }
 
-    fun startCameraPreview() {
-
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-
-        cameraProviderFuture.addListener({
-
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-            preview = Preview.Builder()
-                .build()
-                .also {
-                    it.setSurfaceProvider(previewViewTest.surfaceProvider)
+    override suspend fun switchCamera(
+        lifecycleOwner: LifecycleOwner
+    ) {
+        try {
+            cameraProvider.unbindAll()
+            cameraSelector =
+                if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+                    CameraSelector.DEFAULT_FRONT_CAMERA
+                } else {
+                    CameraSelector.DEFAULT_BACK_CAMERA
                 }
-            imageCapture = ImageCapture.Builder().build()
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    lifecycleOwner, cameraSelector, preview, imageCapture)
-
-            } catch(exc: Exception) {
-                Log.e("EasyCamera", "Use case binding failed", exc)
-            }
-
-        }, ContextCompat.getMainExecutor(context))
+            cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                cameraPreview,
+                imageCapture,
+                imageAnalysis
+            )
+        } catch (e: Exception){
+            e.printStackTrace()
+        }
     }
 
-    @SuppressLint("RestrictedApi")
-    fun switchLens() {
-        cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
-            CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
-        preview = Preview.Builder().setCameraSelector(cameraSelector).build()
-        startCameraPreview()
-    }
-
-    fun captureImage() {
-
+    override suspend fun takeImage(
+        context: Context
+    ) {
         val imageName = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.ENGLISH)
             .format(System.currentTimeMillis())
         val contentValues = ContentValues().apply {
@@ -91,5 +100,4 @@ class CameraX (
             }
         )
     }
-
 }
