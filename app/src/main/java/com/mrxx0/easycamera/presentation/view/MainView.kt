@@ -1,8 +1,13 @@
 package com.mrxx0.easycamera.presentation.view
 
+import android.annotation.SuppressLint
+import android.content.ContentUris
 import android.content.Context
+import android.net.Uri
+import android.provider.MediaStore
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -27,11 +32,15 @@ import androidx.compose.material.icons.filled.HideImage
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -40,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleOwner
+import coil.compose.rememberAsyncImagePainter
 import com.mrxx0.easycamera.presentation.viewmodel.MainViewModel
 
 @Composable
@@ -100,6 +110,7 @@ fun ControlZone(
     val shutterInteractionSource = remember { MutableInteractionSource() }
     val isShutterPressed by shutterInteractionSource.collectIsPressedAsState()
     val shutterButtonColor = if (isShutterPressed) Color.DarkGray else Color.White
+    val lastImageUri = remember { mutableStateOf(viewModel.getLastImageUri(context)) }
 
     val scaffoldState = rememberBottomSheetScaffoldState()
     BottomSheetScaffold(
@@ -130,23 +141,11 @@ fun ControlZone(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ){
-                    OutlinedButton(
-                        onClick = { },
-                        modifier = Modifier.size(54.dp),
-                        shape = CircleShape,
-                        border = BorderStroke(1.dp, Color.White),
-                        contentPadding = PaddingValues(8.dp),
-                    ) {
-                        Icon(
-                            Icons.Default.HideImage,
-                            contentDescription = "Access gallery",
-                            tint = Color.White,
-                            modifier = Modifier.size(54.dp)
-                        )
-                    }
+                    PreviewLastTakenImage(lastImageUri)
                     OutlinedButton(
                         onClick = {
-                                  viewModel.takeImage(context)
+                            viewModel.takeImage(context, lastImageUri)
+
                         },
                         modifier = Modifier.size(80.dp),
                         shape = CircleShape,
@@ -179,6 +178,35 @@ fun ControlZone(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun PreviewLastTakenImage(lastImageUri: MutableState<Uri?>) {
+    if (lastImageUri.value != null) {
+        Image(
+            painter = rememberAsyncImagePainter(lastImageUri.value!!),
+            contentDescription = "last taken image",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(54.dp)
+                .clip(CircleShape)
+        )
+    } else {
+        OutlinedButton(
+            onClick = { },
+            modifier = Modifier.size(54.dp),
+            shape = CircleShape,
+            border = BorderStroke(1.dp, Color.White),
+            contentPadding = PaddingValues(8.dp),
+        ) {
+            Icon(
+                Icons.Default.HideImage,
+                contentDescription = "Access gallery",
+                tint = Color.White,
+                modifier = Modifier.size(54.dp)
+            )
         }
     }
 }
