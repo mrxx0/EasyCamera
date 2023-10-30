@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         if (!hasRequiredPermissions()) {
             ActivityCompat.requestPermissions(
-                this, CAMERA_PERMISSIONS, 0
+                this, APP_PERMISSIONS, 0
             )
         }
         setContent {
@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun hasRequiredPermissions(): Boolean {
-        return CAMERA_PERMISSIONS.all {
+        return APP_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(
                 applicationContext,
                 it
@@ -48,9 +48,10 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        private val CAMERA_PERMISSIONS = arrayOf(
+        private val APP_PERMISSIONS = arrayOf(
             android.Manifest.permission.CAMERA,
-            android.Manifest.permission.RECORD_AUDIO
+            android.Manifest.permission.RECORD_AUDIO,
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
         )
     }
 }
