@@ -3,8 +3,11 @@ package com.mrxx0.easycamera.presentation.viewmodel
 import android.annotation.SuppressLint
 import android.content.ContentUris
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
+import android.widget.Toast
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.LifecycleOwner
@@ -76,5 +79,19 @@ class MainViewModel @Inject constructor(
         }
         cursor?.close()
         return null
+    }
+
+    fun openGallery(lastImageUri: MutableState<Uri?>, context: Context) {
+        if (lastImageUri.value != null) {
+            val galleryIntent = Intent()
+            galleryIntent.action = Intent.ACTION_VIEW
+            galleryIntent.data = lastImageUri.value
+            if (galleryIntent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(galleryIntent)
+            } else {
+                Toast.makeText(context, "No application found to open image", Toast.LENGTH_SHORT).show()
+                Log.d("EasyCamera", "No application found to open image")
+            }
+        }
     }
 }
