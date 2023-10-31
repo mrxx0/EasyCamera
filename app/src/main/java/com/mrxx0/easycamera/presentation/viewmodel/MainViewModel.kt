@@ -1,6 +1,7 @@
 package com.mrxx0.easycamera.presentation.viewmodel
 
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
@@ -83,14 +84,15 @@ class MainViewModel @Inject constructor(
 
     fun openGallery(lastImageUri: MutableState<Uri?>, context: Context) {
         if (lastImageUri.value != null) {
-            val galleryIntent = Intent()
-            galleryIntent.action = Intent.ACTION_VIEW
-            galleryIntent.data = lastImageUri.value
-            if (galleryIntent.resolveActivity(context.packageManager) != null) {
+            val galleryIntent = Intent().apply {
+                action = Intent.ACTION_VIEW
+                setDataAndType(lastImageUri.value!!, "image/*")
+            }
+            try {
                 context.startActivity(galleryIntent)
-            } else {
+            } catch (e: ActivityNotFoundException) {
                 Toast.makeText(context, "No application found to open image", Toast.LENGTH_SHORT).show()
-                Log.d("EasyCamera", "No application found to open image")
+                Log.d("EasyCamera", "No application found to open image + $e")
             }
         }
     }
