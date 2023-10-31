@@ -1,14 +1,12 @@
 package com.mrxx0.easycamera.presentation.view
 
-import android.annotation.SuppressLint
-import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
-import android.provider.MediaStore
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -141,7 +139,7 @@ fun ControlZone(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ){
-                    PreviewLastTakenImage(lastImageUri)
+                    PreviewLastTakenImage(lastImageUri, viewModel, context)
                     OutlinedButton(
                         onClick = {
                             viewModel.takeImage(context, lastImageUri)
@@ -183,7 +181,7 @@ fun ControlZone(
 }
 
 @Composable
-fun PreviewLastTakenImage(lastImageUri: MutableState<Uri?>) {
+fun PreviewLastTakenImage(lastImageUri: MutableState<Uri?>, viewModel: MainViewModel, context: Context) {
     if (lastImageUri.value != null) {
         Image(
             painter = rememberAsyncImagePainter(lastImageUri.value!!),
@@ -192,6 +190,9 @@ fun PreviewLastTakenImage(lastImageUri: MutableState<Uri?>) {
             modifier = Modifier
                 .size(54.dp)
                 .clip(CircleShape)
+                .clickable {
+                    viewModel.openGallery(lastImageUri, context)
+                }
         )
     } else {
         OutlinedButton(
