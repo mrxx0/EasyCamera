@@ -24,8 +24,8 @@ import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Brightness1
-import androidx.compose.material.icons.filled.Cached
+import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.HideImage
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material.rememberBottomSheetScaffoldState
@@ -152,7 +152,7 @@ fun ControlZone(
                         interactionSource = shutterInteractionSource
                     ) {
                         Icon(
-                            Icons.Default.Brightness1,
+                            Icons.Default.Circle,
                             contentDescription = "Shutter button",
                             tint = shutterButtonColor,
                             modifier = Modifier.size(80.dp)
@@ -164,11 +164,11 @@ fun ControlZone(
                         },
                         modifier = Modifier.size(54.dp),
                         shape = CircleShape,
-                        border = BorderStroke(1.dp, Color.White),
+                        border = BorderStroke(2.dp, Color.White),
                         contentPadding = PaddingValues(8.dp),
                     ) {
                         Icon(
-                            Icons.Default.Cached,
+                            Icons.Default.Cameraswitch,
                             contentDescription = "Switch camera",
                             tint = Color.White,
                             modifier = Modifier.size(54.dp)
@@ -182,26 +182,26 @@ fun ControlZone(
 
 @Composable
 fun PreviewLastTakenImage(lastImageUri: MutableState<Uri?>, viewModel: MainViewModel, context: Context) {
-    if (lastImageUri.value != null) {
-        Image(
-            painter = rememberAsyncImagePainter(lastImageUri.value!!),
-            contentDescription = "last taken image",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(54.dp)
-                .clip(CircleShape)
-                .clickable {
-                    viewModel.openGallery(lastImageUri, context)
-                }
-        )
-    } else {
-        OutlinedButton(
-            onClick = { },
-            modifier = Modifier.size(54.dp),
-            shape = CircleShape,
-            border = BorderStroke(1.dp, Color.White),
-            contentPadding = PaddingValues(8.dp),
-        ) {
+    OutlinedButton(
+        onClick = { },
+        modifier = Modifier.size(54.dp),
+        shape = CircleShape,
+        border = BorderStroke(2.dp, Color.White),
+        contentPadding = PaddingValues(1.dp),
+    ) {
+        if (lastImageUri.value != null) {
+            Image(
+                painter = rememberAsyncImagePainter(lastImageUri.value!!),
+                contentDescription = "last taken image",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(54.dp)
+                    .clip(CircleShape)
+                    .clickable {
+                        viewModel.openGallery(lastImageUri, context)
+                    }
+            )
+        } else {
             Icon(
                 Icons.Default.HideImage,
                 contentDescription = "Access gallery",
