@@ -1,12 +1,15 @@
 package com.mrxx0.easycamera.di
 
 import android.app.Application
+import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.AspectRatioStrategy
+import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import com.mrxx0.easycamera.data.repository.EasyCameraRepositoryImplementation
 import com.mrxx0.easycamera.domain.repository.EasyCameraRepository
@@ -71,8 +74,15 @@ object Module {
     @Provides
     @Singleton
     fun provideImageCapture():ImageCapture{
+        val defaultAspectRatioStrategy = AspectRatioStrategy(AspectRatio.RATIO_4_3, AspectRatioStrategy.FALLBACK_RULE_AUTO)
         return ImageCapture.Builder()
+            .setFlashMode(ImageCapture.FLASH_MODE_AUTO)
             .setCaptureMode(CAPTURE_MODE_MAXIMIZE_QUALITY)
+            .setResolutionSelector(
+                ResolutionSelector.Builder()
+                    .setAspectRatioStrategy(defaultAspectRatioStrategy)
+                    .build()
+            )
             .build()
     }
 

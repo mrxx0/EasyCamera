@@ -24,6 +24,16 @@ class MainViewModel @Inject constructor(
     private val cameraRepository: EasyCameraRepository
 ):ViewModel() {
 
+    private var cameraMode = true
+    var timerMode = 0
+
+    fun getMode() : Boolean {
+        return cameraMode
+    }
+    fun setMode(mode : Boolean) {
+        cameraMode = mode
+    }
+
     fun showCameraPreview(
         previewView: PreviewView,
         lifecycleOwner: LifecycleOwner
@@ -47,15 +57,16 @@ class MainViewModel @Inject constructor(
     fun takeImage(
         context: Context,
         lastImageUri: MutableState<Uri?>,
+        timerMode: Int
     ) {
         viewModelScope.launch{
             cameraRepository.takeImage(
                 context,
-                lastImageUri
+                lastImageUri,
+                timerMode
             )
         }
     }
-
 
     @SuppressLint("Range")
     fun getLastImageUri(context: Context): Uri?{
@@ -94,6 +105,30 @@ class MainViewModel @Inject constructor(
                 Toast.makeText(context, "No application found to open image", Toast.LENGTH_SHORT).show()
                 Log.d("EasyCamera", "No application found to open image + $e")
             }
+        }
+    }
+
+    fun setAspectRatio(
+        lifecycleOwner: LifecycleOwner,
+        aspectRatio: Int
+    ) {
+        viewModelScope.launch {
+            cameraRepository.setAspectRatio(
+                lifecycleOwner,
+                aspectRatio
+            )
+        }
+    }
+
+    fun setFlashMode(
+        lifecycleOwner: LifecycleOwner,
+        flashMode: Int
+    ) {
+        viewModelScope.launch {
+            cameraRepository.setFlashMode(
+                lifecycleOwner,
+                flashMode
+            )
         }
     }
 }
