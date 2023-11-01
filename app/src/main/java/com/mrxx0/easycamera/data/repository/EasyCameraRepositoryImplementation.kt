@@ -11,6 +11,8 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.AspectRatioStrategy
+import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.MutableState
@@ -19,13 +21,15 @@ import androidx.lifecycle.LifecycleOwner
 import com.mrxx0.easycamera.domain.repository.EasyCameraRepository
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class EasyCameraRepositoryImplementation @Inject constructor(
     private val cameraProvider: ProcessCameraProvider,
     private var cameraSelector: CameraSelector,
     private val cameraPreview: Preview,
-    private val imageCapture: ImageCapture,
+    private var imageCapture: ImageCapture,
     private val imageAnalysis: ImageAnalysis,
 ):EasyCameraRepository {
     
@@ -75,6 +79,7 @@ class EasyCameraRepositoryImplementation @Inject constructor(
     override suspend fun takeImage(
         context: Context,
         lastImageUri: MutableState<Uri?>,
+        timerMode: Int
     ) {
         val imageName = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.ENGLISH)
             .format(System.currentTimeMillis())
@@ -88,20 +93,72 @@ class EasyCameraRepositoryImplementation @Inject constructor(
         val outputOptions = ImageCapture.OutputFileOptions
             .Builder(context.contentResolver, MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
             .build()
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(context),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onError(exception: ImageCaptureException) {
-                    Log.e("EasyCamera","Photo capture failed: ${exception.message}", exception)
-                }
+         Executors.newSingleThreadScheduledExecutor().schedule({
+             imageCapture.takePicture(
+                 outputOptions,
+                 ContextCompat.getMainExecutor(context), 
+                 object : ImageCapture.OnImageSavedCallback {
+                     override fun onError(exception: ImageCaptureException) {
+                         Log.e(
+                             "EasyCamera",
+                             "Photo capture failed: ${exception.message}",
+                             exception
+                         )
+                     }
+                     override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                         val logMessage = "Photo capture succeeded: ${outputFileResults.savedUri}"
+                         lastImageUri.value = outputFileResults.savedUri!!
+                         Log.d("EasyCamera", logMessage)
+                        }
+                    }
+                )
+            }, timerMode.toLong(), TimeUnit.SECONDS)
+    }
 
-                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    val logMessage = "Photo capture succeeded: ${outputFileResults.savedUri}"
-                    lastImageUri.value = outputFileResults.savedUri!!
-                    Log.d("EasyCamera", logMessage)
-                }
-            }
-        )
+    override suspend fun setAspectRatio(
+        lifecycleOwner: LifecycleOwner,
+        aspectRatio: Int
+    ) {
+        try {
+            cameraProvider.unbindAll()
+            val newAspectRatioStrategy = AspectRatioStrategy(aspectRatio, AspectRatioStrategy.FALLBACK_RULE_AUTO)
+            imageCapture = ImageCapture.Builder()
+                .setResolutionSelector(
+                    ResolutionSelector.Builder()
+                        .setAspectRatioStrategy(newAspectRatioStrategy)
+                        .build()
+                )
+                .build()
+            cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                cameraPreview,
+                imageCapture,
+                imageAnalysis
+            )
+        } catch (e: Exception){
+            e.printStackTrace()
+        }
+    }
+
+    override suspend fun setFlashMode(
+        lifecycleOwner: LifecycleOwner,
+        flashMode: Int
+    ) {
+        try {
+            cameraProvider.unbindAll()
+            imageCapture = ImageCapture.Builder()
+                .setFlashMode(flashMode)
+                .build()
+            cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                cameraPreview,
+                imageCapture,
+                imageAnalysis
+            )
+        } catch (e: Exception){
+            e.printStackTrace()
+        }
     }
 }

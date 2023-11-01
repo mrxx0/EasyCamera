@@ -17,5 +17,16 @@ interface EasyCameraRepository {
     suspend fun takeImage(
         context: Context,
         lastImageUri: MutableState<Uri?>,
+        timerMode: Int
+    )
+
+    suspend fun setAspectRatio(
+        lifecycleOwner: LifecycleOwner,
+        aspectRatio: Int
+    )
+
+    suspend fun setFlashMode(
+        lifecycleOwner: LifecycleOwner,
+        flashMode: Int
     )
 }
