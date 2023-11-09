@@ -89,4 +89,6 @@ dependencies {
     kapt("androidx.hilt:hilt-compiler:1.0.0")
 
     // Coil
-    implementation("io.coil-kt:coil-compose:2.4.0")}
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("io.coil-kt:coil-video:2.5.0")
+}
