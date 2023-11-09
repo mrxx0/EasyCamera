@@ -55,7 +55,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleOwner
+import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
+import coil.decode.VideoFrameDecoder
 import com.mrxx0.easycamera.presentation.viewmodel.MainViewModel
 import kotlin.math.abs
 
@@ -241,26 +243,30 @@ fun ControlZone(
                             Icons.Default.PhotoCamera,
                             contentDescription = "Switch to image mode",
                             tint = Color.White,
-                            modifier = Modifier.size(54.dp).clickable {
-                                if (!viewModel.cameraMode) {
-                                    viewModel.setMode(true)
-                                    cameraMode.value = true
-                                    viewModel.setImageMode(lifecycleOwner)
+                            modifier = Modifier
+                                .size(54.dp)
+                                .clickable {
+                                    if (!viewModel.cameraMode) {
+                                        viewModel.setMode(true)
+                                        cameraMode.value = true
+                                        viewModel.setImageMode(lifecycleOwner)
+                                    }
                                 }
-                            }
                         )
                         Spacer(modifier = Modifier.size(10.dp))
                         Icon(
                             Icons.Default.Videocam,
                             contentDescription = "Switch to video mode",
                             tint = Color.White,
-                            modifier = Modifier.size(54.dp).clickable {
-                                if (viewModel.cameraMode) {
-                                    viewModel.setMode(false)
-                                    cameraMode.value = false
-                                    viewModel.setVideoMode(lifecycleOwner)
+                            modifier = Modifier
+                                .size(54.dp)
+                                .clickable {
+                                    if (viewModel.cameraMode) {
+                                        viewModel.setMode(false)
+                                        cameraMode.value = false
+                                        viewModel.setVideoMode(lifecycleOwner)
+                                    }
                                 }
-                            }
                         )
                     }
                 }
@@ -325,8 +331,16 @@ fun PreviewLastTakenImage(lastImageUri: MutableState<Uri?>, viewModel: MainViewM
         contentPadding = PaddingValues(1.dp),
     ) {
         if (lastImageUri.value != null) {
+            val imageLoader = ImageLoader.Builder(context)
+                .components{
+                    add(VideoFrameDecoder.Factory())
+                }.crossfade(true)
+                .build()
+            val painter = rememberAsyncImagePainter(
+                model = lastImageUri.value!!,
+                imageLoader = imageLoader)
             Image(
-                painter = rememberAsyncImagePainter(lastImageUri.value!!),
+                painter = painter,
                 contentDescription = "last taken image",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
