@@ -47,11 +47,13 @@ class MainViewModel @Inject constructor(
         }
     }
     fun switchCamera(
-        lifecycleOwner: LifecycleOwner
+        lifecycleOwner: LifecycleOwner,
+        cameraMode: Boolean
     ) {
         viewModelScope.launch {
             cameraRepository.switchCamera(
-                lifecycleOwner
+                lifecycleOwner,
+                cameraMode
             )
         }
     }

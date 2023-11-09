@@ -13,7 +13,8 @@ interface EasyCameraRepository {
         lifecycleOwner: LifecycleOwner
     )
     suspend fun switchCamera(
-        lifecycleOwner: LifecycleOwner
+        lifecycleOwner: LifecycleOwner,
+        cameraMode: Boolean
     )
     suspend fun takeImage(
         context: Context,
