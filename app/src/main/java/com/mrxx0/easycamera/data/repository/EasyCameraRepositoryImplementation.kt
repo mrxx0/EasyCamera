@@ -14,11 +14,18 @@ import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.MediaStoreOutputOptions
+import androidx.camera.video.Recorder
+import androidx.camera.video.Recording
+import androidx.camera.video.VideoCapture
+import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.MutableState
 import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker
 import androidx.lifecycle.LifecycleOwner
 import com.mrxx0.easycamera.domain.repository.EasyCameraRepository
+import com.mrxx0.easycamera.presentation.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.Executors
@@ -30,9 +37,11 @@ class EasyCameraRepositoryImplementation @Inject constructor(
     private var cameraSelector: CameraSelector,
     private val cameraPreview: Preview,
     private var imageCapture: ImageCapture,
+    private var videoCapture: VideoCapture<Recorder>,
+    private var recording: Recording?,
     private val imageAnalysis: ImageAnalysis,
-):EasyCameraRepository {
-    
+) : EasyCameraRepository {
+
     override suspend fun showCameraPreview(
         previewView: PreviewView,
         lifecycleOwner: LifecycleOwner
@@ -46,9 +55,8 @@ class EasyCameraRepositoryImplementation @Inject constructor(
                 cameraSelector,
                 cameraPreview,
                 imageCapture,
-                imageAnalysis
             )
-        } catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
@@ -69,9 +77,8 @@ class EasyCameraRepositoryImplementation @Inject constructor(
                 cameraSelector,
                 cameraPreview,
                 imageCapture,
-                imageAnalysis
             )
-        } catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
@@ -81,38 +88,116 @@ class EasyCameraRepositoryImplementation @Inject constructor(
         lastImageUri: MutableState<Uri?>,
         timerMode: Int
     ) {
+
         val imageName = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.ENGLISH)
             .format(System.currentTimeMillis())
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, imageName)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P){
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
                 put(MediaStore.Images.Media.RELATIVE_PATH, "DCIM/Camera")
             }
         }
         val outputOptions = ImageCapture.OutputFileOptions
-            .Builder(context.contentResolver, MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            .Builder(
+                context.contentResolver,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues
+            )
             .build()
-         Executors.newSingleThreadScheduledExecutor().schedule({
-             imageCapture.takePicture(
-                 outputOptions,
-                 ContextCompat.getMainExecutor(context), 
-                 object : ImageCapture.OnImageSavedCallback {
-                     override fun onError(exception: ImageCaptureException) {
-                         Log.e(
-                             "EasyCamera",
-                             "Photo capture failed: ${exception.message}",
-                             exception
-                         )
-                     }
-                     override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                         val logMessage = "Photo capture succeeded: ${outputFileResults.savedUri}"
-                         lastImageUri.value = outputFileResults.savedUri!!
-                         Log.d("EasyCamera", logMessage)
+        Executors.newSingleThreadScheduledExecutor().schedule({
+            imageCapture.takePicture(
+                outputOptions,
+                ContextCompat.getMainExecutor(context),
+                object : ImageCapture.OnImageSavedCallback {
+                    override fun onError(exception: ImageCaptureException) {
+                        Log.e(
+                            "EasyCamera",
+                            "Photo capture failed: ${exception.message}",
+                            exception
+                        )
+                    }
+
+                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                        val logMessage = "Photo capture succeeded: ${outputFileResults.savedUri}"
+                        lastImageUri.value = outputFileResults.savedUri!!
+                        Log.d("EasyCamera", logMessage)
+                    }
+                }
+            )
+        }, timerMode.toLong(), TimeUnit.SECONDS)
+    }
+
+    override suspend fun takeVideo(
+        context: Context,
+        lastImageUri: MutableState<Uri?>,
+        timerMode: Int,
+        viewModel: MainViewModel
+    ) {
+        val curRecording = recording
+        if (curRecording != null) {
+            viewModel.videoRecording = false
+            curRecording.stop()
+            recording = null
+            return
+        }
+        val videoName = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.ENGLISH)
+            .format(System.currentTimeMillis())
+
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, videoName)
+            put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+                put(MediaStore.Video.Media.RELATIVE_PATH, "DCIM/Camera")
+            }
+        }
+        val outputOptions = MediaStoreOutputOptions
+            .Builder(context.contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            .setContentValues(contentValues)
+            .build()
+        if (!viewModel.videoRecording) {
+
+            viewModel.videoRecording = true
+            recording = videoCapture.output
+                .prepareRecording(context, outputOptions)
+                .apply {
+                    if (PermissionChecker.checkSelfPermission(
+                            context.applicationContext,
+                            android.Manifest.permission.RECORD_AUDIO
+                        ) ==
+                        PermissionChecker.PERMISSION_GRANTED
+                    ) {
+                        withAudioEnabled()
+                    }
+                }
+                .start(ContextCompat.getMainExecutor(context)) { recordEvent ->
+                    when (recordEvent) {
+                        is VideoRecordEvent.Start -> {
+                            viewModel.videoRecording = true
+                        }
+
+                        is VideoRecordEvent.Finalize -> {
+                            if (!recordEvent.hasError()) {
+                                val logMessage =
+                                    "Video capture succeeded: ${recordEvent.outputResults.outputUri}"
+                                lastImageUri.value = recordEvent.outputResults.outputUri
+                                Log.d("EasyCamera", logMessage)
+                            } else {
+                                recording?.close()
+                                recording = null
+                                Log.e(
+                                    "EasyCamera",
+                                    "Video capture failed ${recordEvent.error} + ${recordEvent.cause}"
+                                )
+                            }
                         }
                     }
-                )
-            }, timerMode.toLong(), TimeUnit.SECONDS)
+                }
+        } else {
+            viewModel.videoRecording = false
+            recording?.stop()
+            recording = null
+        }
     }
 
     override suspend fun setAspectRatio(
@@ -121,7 +206,8 @@ class EasyCameraRepositoryImplementation @Inject constructor(
     ) {
         try {
             cameraProvider.unbindAll()
-            val newAspectRatioStrategy = AspectRatioStrategy(aspectRatio, AspectRatioStrategy.FALLBACK_RULE_AUTO)
+            val newAspectRatioStrategy =
+                AspectRatioStrategy(aspectRatio, AspectRatioStrategy.FALLBACK_RULE_AUTO)
             imageCapture = ImageCapture.Builder()
                 .setResolutionSelector(
                     ResolutionSelector.Builder()
@@ -134,9 +220,8 @@ class EasyCameraRepositoryImplementation @Inject constructor(
                 cameraSelector,
                 cameraPreview,
                 imageCapture,
-                imageAnalysis
             )
-        } catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
@@ -155,9 +240,42 @@ class EasyCameraRepositoryImplementation @Inject constructor(
                 cameraSelector,
                 cameraPreview,
                 imageCapture,
-                imageAnalysis
             )
-        } catch (e: Exception){
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override suspend fun imageMode(
+        lifecycleOwner: LifecycleOwner
+    ) {
+        try {
+            cameraProvider.unbindAll()
+            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                cameraPreview,
+                imageCapture,
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override suspend fun videoMode(
+        lifecycleOwner: LifecycleOwner
+    ) {
+        try {
+            cameraProvider.unbindAll()
+            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                cameraPreview,
+                videoCapture,
+            )
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
