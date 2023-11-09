@@ -62,7 +62,8 @@ class EasyCameraRepositoryImplementation @Inject constructor(
     }
 
     override suspend fun switchCamera(
-        lifecycleOwner: LifecycleOwner
+        lifecycleOwner: LifecycleOwner,
+        cameraMode: Boolean
     ) {
         try {
             cameraProvider.unbindAll()
@@ -76,7 +77,11 @@ class EasyCameraRepositoryImplementation @Inject constructor(
                 lifecycleOwner,
                 cameraSelector,
                 cameraPreview,
-                imageCapture,
+                if (cameraMode) {
+                    imageCapture
+                } else {
+                    videoCapture
+                       },
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -251,7 +256,6 @@ class EasyCameraRepositoryImplementation @Inject constructor(
     ) {
         try {
             cameraProvider.unbindAll()
-            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
             cameraProvider.bindToLifecycle(
                 lifecycleOwner,
                 cameraSelector,
@@ -268,7 +272,6 @@ class EasyCameraRepositoryImplementation @Inject constructor(
     ) {
         try {
             cameraProvider.unbindAll()
-            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
             cameraProvider.bindToLifecycle(
                 lifecycleOwner,
                 cameraSelector,

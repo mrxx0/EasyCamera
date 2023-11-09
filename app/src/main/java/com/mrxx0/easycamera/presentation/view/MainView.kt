@@ -213,7 +213,7 @@ fun ControlZone(
                     OutlinedButton(
                         onClick = {
                             if (!viewModel.videoRecording) {
-                                viewModel.switchCamera(lifecycleOwner)
+                                viewModel.switchCamera(lifecycleOwner, viewModel.cameraMode)
                             }
                         },
                         modifier = Modifier.size(54.dp),
