@@ -11,12 +11,19 @@ import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.FallbackStrategy
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
+import androidx.camera.video.Recorder
+import androidx.camera.video.Recording
+import androidx.camera.video.VideoCapture
 import com.mrxx0.easycamera.data.repository.EasyCameraRepositoryImplementation
 import com.mrxx0.easycamera.domain.repository.EasyCameraRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import java.util.concurrent.Executors
 import javax.inject.Singleton
 
 @Module
@@ -86,6 +93,27 @@ object Module {
             .build()
     }
 
+    @Singleton
+    @Provides
+    fun provideVideoCapture(): VideoCapture<Recorder> {
+        val selector = QualitySelector
+            .from(
+                Quality.UHD,
+                FallbackStrategy.higherQualityOrLowerThan(Quality.FHD)
+            )
+        val recorder = Recorder.Builder()
+            .setExecutor(Executors.newSingleThreadExecutor())
+            .setQualitySelector(selector)
+            .build()
+        return VideoCapture.withOutput(recorder)
+    }
+
+    @Singleton
+    @Provides
+    fun provideRecording(): Recording? {
+        return null
+    }
+
     @Provides
     @Singleton
     fun provideImageAnalysis():ImageAnalysis{
@@ -101,6 +129,8 @@ object Module {
         cameraSelector: CameraSelector,
         cameraPreview: Preview,
         imageCapture: ImageCapture,
+        videoCapture: VideoCapture<Recorder>,
+        recording: Recording?,
         imageAnalysis: ImageAnalysis,
     ):EasyCameraRepository {
         return EasyCameraRepositoryImplementation(
@@ -108,6 +138,8 @@ object Module {
             cameraSelector,
             cameraPreview,
             imageCapture,
+            videoCapture,
+            recording,
             imageAnalysis
         )
     }

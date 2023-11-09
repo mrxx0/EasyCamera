@@ -173,11 +173,9 @@ fun ControlZone(
     viewModel: MainViewModel
 ) {
 
-    val shutterInteractionSource = remember { MutableInteractionSource() }
-    val isShutterPressed by shutterInteractionSource.collectIsPressedAsState()
-    val shutterButtonColor = if (isShutterPressed) Color.DarkGray else Color.White
-    val lastImageUri = remember { mutableStateOf(viewModel.getLastImageUri(context)) }
 
+    val lastImageUri = remember { mutableStateOf(viewModel.getLastImageUri(context)) }
+    val cameraMode = remember { mutableStateOf(viewModel.getMode()) }
     val scaffoldState = rememberBottomSheetScaffoldState()
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
@@ -209,27 +207,12 @@ fun ControlZone(
                     verticalAlignment = Alignment.CenterVertically
                 ){
                     PreviewLastTakenImage(lastImageUri, viewModel, context)
+                    ShutterButton(context, lifecycleOwner, viewModel, lastImageUri, cameraMode.value)
                     OutlinedButton(
                         onClick = {
-                            viewModel.takeImage(context, lastImageUri, viewModel.timerMode)
-
-                        },
-                        modifier = Modifier.size(80.dp),
-                        shape = CircleShape,
-                        border = BorderStroke(4.dp, Color.White),
-                        contentPadding = PaddingValues(4.dp),
-                        interactionSource = shutterInteractionSource
-                    ) {
-                        Icon(
-                            Icons.Default.Circle,
-                            contentDescription = "Shutter button",
-                            tint = shutterButtonColor,
-                            modifier = Modifier.size(80.dp)
-                        )
-                    }
-                    OutlinedButton(
-                        onClick = {
-                                  viewModel.switchCamera(lifecycleOwner)
+                            if (!viewModel.videoRecording) {
+                                viewModel.switchCamera(lifecycleOwner)
+                            }
                         },
                         modifier = Modifier.size(54.dp),
                         shape = CircleShape,
@@ -259,7 +242,11 @@ fun ControlZone(
                             contentDescription = "Switch to image mode",
                             tint = Color.White,
                             modifier = Modifier.size(54.dp).clickable {
-                                viewModel.setMode(true)
+                                if (!viewModel.cameraMode) {
+                                    viewModel.setMode(true)
+                                    cameraMode.value = true
+                                    viewModel.setImageMode(lifecycleOwner)
+                                }
                             }
                         )
                         Spacer(modifier = Modifier.size(10.dp))
@@ -268,13 +255,63 @@ fun ControlZone(
                             contentDescription = "Switch to video mode",
                             tint = Color.White,
                             modifier = Modifier.size(54.dp).clickable {
-                                viewModel.setMode(false)
+                                if (viewModel.cameraMode) {
+                                    viewModel.setMode(false)
+                                    cameraMode.value = false
+                                    viewModel.setVideoMode(lifecycleOwner)
+                                }
                             }
                         )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ShutterButton(
+    context: Context,
+    lifecycleOwner: LifecycleOwner,
+    viewModel: MainViewModel,
+    lastImageUri: MutableState<Uri?>,
+    cameraMode: Boolean
+) {
+
+    val shutterInteractionSource = remember { MutableInteractionSource() }
+    val isShutterPressed by shutterInteractionSource.collectIsPressedAsState()
+    val shutterButtonColor = if (isShutterPressed) {
+        Color.DarkGray
+    } else {
+        if (cameraMode)
+        {
+            Color.White
+        } else {
+            Color.Red
+        }
+    }
+
+    OutlinedButton(
+        onClick = {
+            if (cameraMode) {
+                viewModel.takeImage(context, lastImageUri, viewModel.timerMode)
+            } else {
+                viewModel.takeVideo(context, lastImageUri, viewModel.timerMode, viewModel)
+            }
+
+        },
+        modifier = Modifier.size(80.dp),
+        shape = CircleShape,
+        border = BorderStroke(4.dp, Color.White),
+        contentPadding = PaddingValues(4.dp),
+        interactionSource = shutterInteractionSource
+    ) {
+        Icon(
+            Icons.Default.Circle,
+            contentDescription = "Shutter button",
+            tint = shutterButtonColor,
+            modifier = Modifier.size(80.dp)
+        )
     }
 }
 

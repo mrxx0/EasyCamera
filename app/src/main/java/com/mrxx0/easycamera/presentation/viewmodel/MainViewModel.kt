@@ -24,8 +24,9 @@ class MainViewModel @Inject constructor(
     private val cameraRepository: EasyCameraRepository
 ):ViewModel() {
 
-    private var cameraMode = true
+    var cameraMode = true
     var timerMode = 0
+    var videoRecording = false
 
     fun getMode() : Boolean {
         return cameraMode
@@ -64,6 +65,22 @@ class MainViewModel @Inject constructor(
                 context,
                 lastImageUri,
                 timerMode
+            )
+        }
+    }
+
+    fun takeVideo(
+        context: Context,
+        lastImageUri: MutableState<Uri?>,
+        timerMode: Int,
+        viewModel: MainViewModel
+    ) {
+        viewModelScope.launch {
+            cameraRepository.takeVideo(
+                context,
+                lastImageUri,
+                timerMode,
+                viewModel
             )
         }
     }
@@ -129,6 +146,22 @@ class MainViewModel @Inject constructor(
                 lifecycleOwner,
                 flashMode
             )
+        }
+    }
+
+    fun setImageMode(
+        lifecycleOwner: LifecycleOwner
+    ) {
+        viewModelScope.launch {
+            cameraRepository.imageMode(lifecycleOwner)
+        }
+    }
+
+    fun setVideoMode(
+        lifecycleOwner: LifecycleOwner
+    ) {
+        viewModelScope.launch {
+            cameraRepository.videoMode(lifecycleOwner)
         }
     }
 }
