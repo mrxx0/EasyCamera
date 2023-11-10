@@ -16,6 +16,6 @@ fun SettingsCard(
     if (viewModel.getMode()) {
         ImageSettings(lifecycleOwner)
     } else {
-        VideoSettings(screeHeight)
+        VideoSettings(lifecycleOwner)
     }
 }

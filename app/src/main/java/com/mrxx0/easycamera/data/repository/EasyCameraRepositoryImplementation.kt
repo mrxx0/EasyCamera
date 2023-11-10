@@ -2,10 +2,17 @@ package com.mrxx0.easycamera.data.repository
 
 import android.content.ContentValues
 import android.content.Context
+import android.hardware.camera2.CaptureRequest
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
+import android.util.Range
+import androidx.annotation.OptIn
+import androidx.camera.camera2.interop.Camera2CameraControl
+import androidx.camera.camera2.interop.CaptureRequestOptions
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -14,7 +21,10 @@ import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.FallbackStrategy
 import androidx.camera.video.MediaStoreOutputOptions
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
@@ -35,13 +45,15 @@ import javax.inject.Inject
 class EasyCameraRepositoryImplementation @Inject constructor(
     private val cameraProvider: ProcessCameraProvider,
     private var cameraSelector: CameraSelector,
-    private val cameraPreview: Preview,
+    private var cameraPreview: Preview,
     private var imageCapture: ImageCapture,
     private var videoCapture: VideoCapture<Recorder>,
     private var recording: Recording?,
     private val imageAnalysis: ImageAnalysis,
 ) : EasyCameraRepository {
 
+
+    private var camControl : Camera? = null
     override suspend fun showCameraPreview(
         previewView: PreviewView,
         lifecycleOwner: LifecycleOwner
@@ -187,9 +199,11 @@ class EasyCameraRepositoryImplementation @Inject constructor(
                                     "Video capture succeeded: ${recordEvent.outputResults.outputUri}"
                                 lastImageUri.value = recordEvent.outputResults.outputUri
                                 Log.d("EasyCamera", logMessage)
+                                viewModel.videoRecording = false
                             } else {
                                 recording?.close()
                                 recording = null
+                                viewModel.videoRecording = false
                                 Log.e(
                                     "EasyCamera",
                                     "Video capture failed ${recordEvent.error} + ${recordEvent.cause}"
@@ -231,7 +245,7 @@ class EasyCameraRepositoryImplementation @Inject constructor(
         }
     }
 
-    override suspend fun setFlashMode(
+    override suspend fun setImageFlashMode(
         lifecycleOwner: LifecycleOwner,
         flashMode: Int
     ) {
@@ -267,9 +281,42 @@ class EasyCameraRepositoryImplementation @Inject constructor(
         }
     }
 
-    override suspend fun videoMode(
+    @OptIn(ExperimentalCamera2Interop::class) override suspend fun videoMode(
         lifecycleOwner: LifecycleOwner
     ) {
+        try {
+            cameraProvider.unbindAll()
+            camControl = cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                cameraPreview,
+                videoCapture,
+            )
+            val newControl = Camera2CameraControl.from(camControl!!.cameraControl)
+            newControl.captureRequestOptions = CaptureRequestOptions.Builder().setCaptureRequestOption(
+                CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+                Range.create(30, 30)
+            )
+                .build()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override suspend fun setVideoResolution(
+        lifecycleOwner: LifecycleOwner,
+        videoQuality: Quality
+    ) {
+        val selector = QualitySelector
+            .from(
+                videoQuality,
+                FallbackStrategy.higherQualityOrLowerThan(Quality.FHD)
+            )
+        val recorder = Recorder.Builder()
+            .setExecutor(Executors.newSingleThreadExecutor())
+            .setQualitySelector(selector)
+            .build()
+        videoCapture = VideoCapture.withOutput(recorder)
         try {
             cameraProvider.unbindAll()
             cameraProvider.bindToLifecycle(
@@ -278,6 +325,48 @@ class EasyCameraRepositoryImplementation @Inject constructor(
                 cameraPreview,
                 videoCapture,
             )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override suspend fun setVideoFlashMode(
+        lifecycleOwner: LifecycleOwner,
+        flashMode: Boolean
+    ) {
+        try {
+            cameraProvider.unbindAll()
+            val camera = cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                cameraPreview,
+                videoCapture,
+            )
+            if (camera.cameraInfo.hasFlashUnit()) {
+                camera.cameraControl.enableTorch(flashMode)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    @OptIn(ExperimentalCamera2Interop::class) override suspend fun setVideoFPS(
+        lifecycleOwner: LifecycleOwner,
+        fpsValue: Int
+    ) {
+        try {
+            cameraProvider.unbindAll()
+            camControl = cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                cameraPreview,
+                videoCapture,
+            )
+                val newControl = Camera2CameraControl.from(camControl!!.cameraControl)
+                newControl.captureRequestOptions = CaptureRequestOptions.Builder().setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+                    Range.create(30, fpsValue)
+                ).build()
         } catch (e: Exception) {
             e.printStackTrace()
         }
