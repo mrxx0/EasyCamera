@@ -9,6 +9,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
+import androidx.camera.video.Quality
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.LifecycleOwner
@@ -144,7 +145,7 @@ class MainViewModel @Inject constructor(
         flashMode: Int
     ) {
         viewModelScope.launch {
-            cameraRepository.setFlashMode(
+            cameraRepository.setImageFlashMode(
                 lifecycleOwner,
                 flashMode
             )
@@ -164,6 +165,42 @@ class MainViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             cameraRepository.videoMode(lifecycleOwner)
+        }
+    }
+
+    fun setVideoQuality(
+        lifecycleOwner: LifecycleOwner,
+        videoQuality: Quality
+    ) {
+        viewModelScope.launch {
+            cameraRepository.setVideoResolution(
+                lifecycleOwner,
+                videoQuality
+            )
+        }
+    }
+
+    fun setVideoFlash(
+        lifecycleOwner: LifecycleOwner,
+        flashMode: Boolean
+    ) {
+        viewModelScope.launch {
+            cameraRepository.setVideoFlashMode(
+                lifecycleOwner,
+                flashMode
+            )
+        }
+    }
+
+    fun setFpsValue(
+        lifecycleOwner: LifecycleOwner,
+        fpsValue: Int
+    ) {
+        viewModelScope.launch {
+            cameraRepository.setVideoFPS(
+                lifecycleOwner,
+                fpsValue
+            )
         }
     }
 }

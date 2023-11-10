@@ -160,7 +160,7 @@ fun CameraPreview(
                 .height(screeHeight * 0.65f)
                 .width(screenWidth)
         )
-        if (showCard) {
+        if (showCard && !viewModel.videoRecording) {
             SettingsCard(screeHeight, lifecycleOwner)
         }
     }
@@ -209,7 +209,7 @@ fun ControlZone(
                     verticalAlignment = Alignment.CenterVertically
                 ){
                     PreviewLastTakenImage(lastImageUri, viewModel, context)
-                    ShutterButton(context, lifecycleOwner, viewModel, lastImageUri, cameraMode.value)
+                    ShutterButton(context, viewModel, lastImageUri, cameraMode.value)
                     OutlinedButton(
                         onClick = {
                             if (!viewModel.videoRecording) {
@@ -278,7 +278,6 @@ fun ControlZone(
 @Composable
 fun ShutterButton(
     context: Context,
-    lifecycleOwner: LifecycleOwner,
     viewModel: MainViewModel,
     lastImageUri: MutableState<Uri?>,
     cameraMode: Boolean
@@ -332,13 +331,14 @@ fun PreviewLastTakenImage(lastImageUri: MutableState<Uri?>, viewModel: MainViewM
     ) {
         if (lastImageUri.value != null) {
             val imageLoader = ImageLoader.Builder(context)
-                .components{
+                .components {
                     add(VideoFrameDecoder.Factory())
                 }.crossfade(true)
                 .build()
             val painter = rememberAsyncImagePainter(
                 model = lastImageUri.value!!,
-                imageLoader = imageLoader)
+                imageLoader = imageLoader
+            )
             Image(
                 painter = painter,
                 contentDescription = "last taken image",
