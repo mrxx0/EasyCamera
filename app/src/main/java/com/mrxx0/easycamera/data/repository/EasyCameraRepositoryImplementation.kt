@@ -1,5 +1,6 @@
 package com.mrxx0.easycamera.data.repository
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.hardware.camera2.CaptureRequest
@@ -8,6 +9,7 @@ import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import android.util.Range
+import android.view.ScaleGestureDetector
 import androidx.annotation.OptIn
 import androidx.camera.camera2.interop.Camera2CameraControl
 import androidx.camera.camera2.interop.CaptureRequestOptions
@@ -52,22 +54,41 @@ class EasyCameraRepositoryImplementation @Inject constructor(
     private val imageAnalysis: ImageAnalysis,
 ) : EasyCameraRepository {
 
-
     private var camControl : Camera? = null
+
+    @SuppressLint("ClickableViewAccessibility")
     override suspend fun showCameraPreview(
         previewView: PreviewView,
-        lifecycleOwner: LifecycleOwner
+        lifecycleOwner: LifecycleOwner,
+        context: Context
     ) {
         cameraPreview.setSurfaceProvider(previewView.surfaceProvider)
         try {
             cameraProvider.unbindAll()
             cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-            cameraProvider.bindToLifecycle(
+            camControl = cameraProvider.bindToLifecycle(
                 lifecycleOwner,
                 cameraSelector,
                 cameraPreview,
                 imageCapture,
             )
+
+            val listener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                override fun onScale(detector: ScaleGestureDetector): Boolean {
+                    val currentZoomRatio = camControl?.cameraInfo?.zoomState?.value?.zoomRatio ?: 0f
+                    val delta = detector.scaleFactor
+
+                    camControl?.cameraControl?.setZoomRatio(currentZoomRatio * delta)
+                    return true
+                }
+            }
+            val scaleGestureDetector = ScaleGestureDetector(context, listener)
+            previewView.setOnTouchListener {
+                _, event ->
+                scaleGestureDetector.onTouchEvent(event)
+                return@setOnTouchListener true
+            }
+
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -85,7 +106,7 @@ class EasyCameraRepositoryImplementation @Inject constructor(
                 } else {
                     CameraSelector.DEFAULT_BACK_CAMERA
                 }
-            cameraProvider.bindToLifecycle(
+            camControl = cameraProvider.bindToLifecycle(
                 lifecycleOwner,
                 cameraSelector,
                 cameraPreview,
@@ -298,6 +319,8 @@ class EasyCameraRepositoryImplementation @Inject constructor(
                 Range.create(30, 30)
             )
                 .build()
+
+
         } catch (e: Exception) {
             e.printStackTrace()
         }

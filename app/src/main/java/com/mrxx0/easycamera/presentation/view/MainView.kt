@@ -91,6 +91,7 @@ fun CameraPreview(
     var previewView: PreviewView
     var swapDirection by remember { mutableStateOf(-1)}
     var showCard by remember { mutableStateOf(false)}
+    val context = LocalContext.current
     Box(
         modifier = Modifier
             .pointerInput(Unit) {
@@ -153,8 +154,9 @@ fun CameraPreview(
         AndroidView(
             factory = {
                 previewView = PreviewView(it)
-                viewModel.showCameraPreview(previewView, lifecycleOwner)
+                viewModel.showCameraPreview(previewView, lifecycleOwner, context)
                 previewView
+
             },
             modifier = Modifier
                 .height(screeHeight * 0.65f)
@@ -184,7 +186,6 @@ fun ControlZone(
         sheetPeekHeight = 0.dp,
         sheetContent = {
 
-
         }
     ) { padding ->
         Box(
@@ -193,6 +194,7 @@ fun ControlZone(
                 .fillMaxWidth()
                 .padding(padding)
         ) {
+
             Column(
                 modifier = Modifier
                     .height(screeHeight * 0.35f)
