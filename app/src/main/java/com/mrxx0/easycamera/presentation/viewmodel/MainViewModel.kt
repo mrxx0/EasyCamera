@@ -38,12 +38,14 @@ class MainViewModel @Inject constructor(
 
     fun showCameraPreview(
         previewView: PreviewView,
-        lifecycleOwner: LifecycleOwner
+        lifecycleOwner: LifecycleOwner,
+        context: Context
     ) {
         viewModelScope.launch {
             cameraRepository.showCameraPreview(
                 previewView,
-                lifecycleOwner
+                lifecycleOwner,
+                context
                 )
         }
     }

@@ -11,7 +11,8 @@ import com.mrxx0.easycamera.presentation.viewmodel.MainViewModel
 interface EasyCameraRepository {
     suspend fun showCameraPreview(
         previewView: PreviewView,
-        lifecycleOwner: LifecycleOwner
+        lifecycleOwner: LifecycleOwner,
+        context: Context
     )
     suspend fun switchCamera(
         lifecycleOwner: LifecycleOwner,
