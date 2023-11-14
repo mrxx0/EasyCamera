@@ -26,8 +26,9 @@ class MainViewModel @Inject constructor(
 ):ViewModel() {
 
     var cameraMode = true
-    var timerMode = 0
     var videoRecording = false
+
+    var mainTimer = 0
 
     fun getMode() : Boolean {
         return cameraMode
@@ -36,6 +37,11 @@ class MainViewModel @Inject constructor(
         cameraMode = mode
     }
 
+    fun setTimerMode(
+        newTimer: Int
+    ) {
+        mainTimer = newTimer
+    }
     fun showCameraPreview(
         previewView: PreviewView,
         lifecycleOwner: LifecycleOwner,
@@ -77,14 +83,12 @@ class MainViewModel @Inject constructor(
     fun takeVideo(
         context: Context,
         lastImageUri: MutableState<Uri?>,
-        timerMode: Int,
         viewModel: MainViewModel
     ) {
         viewModelScope.launch {
             cameraRepository.takeVideo(
                 context,
                 lastImageUri,
-                timerMode,
                 viewModel
             )
         }
@@ -195,12 +199,10 @@ class MainViewModel @Inject constructor(
     }
 
     fun setFpsValue(
-        lifecycleOwner: LifecycleOwner,
         fpsValue: Int
     ) {
         viewModelScope.launch {
             cameraRepository.setVideoFPS(
-                lifecycleOwner,
                 fpsValue
             )
         }

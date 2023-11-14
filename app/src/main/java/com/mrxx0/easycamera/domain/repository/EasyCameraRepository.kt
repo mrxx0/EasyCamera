@@ -27,7 +27,6 @@ interface EasyCameraRepository {
     suspend fun takeVideo(
         context: Context,
         lastImageUri: MutableState<Uri?>,
-        timerMode: Int,
         viewModel: MainViewModel
     )
 
@@ -58,7 +57,6 @@ interface EasyCameraRepository {
     )
 
     suspend fun setVideoFPS(
-        lifecycleOwner: LifecycleOwner,
         fpsValue: Int
     )
 }

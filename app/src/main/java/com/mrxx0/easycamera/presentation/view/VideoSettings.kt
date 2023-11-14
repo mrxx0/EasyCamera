@@ -17,32 +17,41 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesomeMotion
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
-import androidx.compose.material.icons.twotone.AutoAwesomeMotion
-import androidx.compose.material.icons.twotone.Hd
+import androidx.compose.material.icons.filled.Hd
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleOwner
-import com.mrxx0.easycamera.presentation.viewmodel.MainViewModel
+import com.mrxx0.easycamera.presentation.viewmodel.VideoSettingsViewModel
 
 @Composable
 fun VideoSettings(
     lifecycleOwner: LifecycleOwner,
-    viewModel: MainViewModel = hiltViewModel()
+    setVideoFlash: (LifecycleOwner, Boolean) -> Unit,
+    setFpsValue: (Int) -> Unit,
+    setVideoQuality: (LifecycleOwner, Quality) -> Unit,
+    fpsState: MutableState<VideoSettingsViewModel.FpsState>,
+    qualityState: MutableState<VideoSettingsViewModel.QualityState>,
+    flashState: MutableState<VideoSettingsViewModel.FlashState>,
 ) {
-    Box(modifier = Modifier
-        .padding(12.dp)
-        .padding(top = 50.dp)
-        .clip(shape = RoundedCornerShape(15.dp))
-        .background(Color.DarkGray),
+    Box(
+        modifier = Modifier
+            .padding(12.dp)
+            .padding(top = 50.dp)
+            .clip(shape = RoundedCornerShape(15.dp))
+            .background(Color.DarkGray),
     ) {
         Column(
             modifier = Modifier
@@ -57,9 +66,9 @@ fun VideoSettings(
             ) {
                 Text("Video", color = Color.White, fontSize = 20.sp)
             }
-            VideoFpsSettings(lifecycleOwner, viewModel)
-            VideoQualitySettings(lifecycleOwner, viewModel)
-            VideoFlashSettings(lifecycleOwner, viewModel)
+            VideoFpsSettings(setFpsValue, fpsState)
+            VideoQualitySettings(lifecycleOwner, setVideoQuality, qualityState)
+            VideoFlashSettings(lifecycleOwner, setVideoFlash, flashState)
         }
     }
 }
@@ -67,8 +76,14 @@ fun VideoSettings(
 @Composable
 fun VideoFlashSettings(
     lifecycleOwner: LifecycleOwner,
-    viewModel: MainViewModel
+    setVideoFlash: (LifecycleOwner, Boolean) -> Unit,
+    flashState: MutableState<VideoSettingsViewModel.FlashState>
 ) {
+    val currentFlash by remember {
+        mutableStateOf(
+            flashState.value
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -84,45 +99,55 @@ fun VideoFlashSettings(
             Row(
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                Row (
+                Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
-                ){
+                ) {
                     Column(
                         verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            flashState.value = currentFlash.copy(off = false, on = true)
+                            setVideoFlash(
+                                lifecycleOwner,
+                                true
+                            )
+                        }
                     ) {
                         Icon(
                             Icons.Default.FlashOn,
                             contentDescription = "Flash On",
-                            tint = Color.White,
+                            tint = if (flashState.value.on) {
+                                Color.Blue
+                            } else {
+                                Color.White
+                            },
                             modifier = Modifier
                                 .size(38.dp)
-                                .clickable {
-                                    viewModel.setVideoFlash(
-                                        lifecycleOwner,
-                                        true
-                                    )
-                                }
                         )
                         Text("On", color = Color.White)
                     }
                     Column(
                         verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            flashState.value = currentFlash.copy(off = true, on = false)
+                            setVideoFlash(
+                                lifecycleOwner,
+                                false
+                            )
+                        }
                     ) {
                         Icon(
                             Icons.Default.FlashOff,
                             contentDescription = "Flash Off",
-                            tint = Color.White,
+                            tint = if (flashState.value.off) {
+                                Color.Blue
+                            } else {
+                                Color.White
+                            },
                             modifier = Modifier
                                 .size(38.dp)
-                                .clickable {
-                                    viewModel.setVideoFlash(
-                                        lifecycleOwner,
-                                        false
-                                    )
-                                }
                         )
                         Text("Off", color = Color.White)
                     }
@@ -134,9 +159,16 @@ fun VideoFlashSettings(
 
 @Composable
 fun VideoFpsSettings(
-    lifecycleOwner: LifecycleOwner,
-    viewModel: MainViewModel
+    setFpsValue: (Int) -> Unit,
+    fpsState: MutableState<VideoSettingsViewModel.FpsState>
 ) {
+
+    val currentFps by remember {
+        mutableStateOf(
+            fpsState.value
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -149,48 +181,57 @@ fun VideoFpsSettings(
             Text("Frame/sec", color = MaterialTheme.colors.onPrimary)
             Spacer(modifier = Modifier.fillMaxWidth(fraction = 0.4f))
 
-            Row (
+            Row(
                 horizontalArrangement = Arrangement.End
-            ){
-                Row (
+            ) {
+                Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
-                ){
+                ) {
                     Column(
                         verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            fpsState.value = currentFps.copy(sixty = true, thirty = false)
+                            setFpsValue(
+                                60
+                            )
+                        }
                     ) {
                         Icon(
-                            Icons.TwoTone.AutoAwesomeMotion,
+                            Icons.Default.AutoAwesomeMotion,
                             contentDescription = "60fps",
-                            tint = Color.White,
+                            tint = if (fpsState.value.sixty) {
+                                Color.Blue
+                            } else {
+                                Color.White
+                            },
                             modifier = Modifier
                                 .size(38.dp)
-                                .clickable {
-                                    viewModel.setFpsValue(
-                                        lifecycleOwner,
-                                        60
-                                    )
-                                }
+
                         )
                         Text("60 fps", color = Color.White)
                     }
                     Column(
                         verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            fpsState.value = currentFps.copy(sixty = false, thirty = true)
+                            setFpsValue(
+                                30
+                            )
+                        }
                     ) {
                         Icon(
-                            Icons.TwoTone.AutoAwesomeMotion,
+                            Icons.Default.AutoAwesomeMotion,
                             contentDescription = "30fps",
-                            tint = Color.White,
+                            tint = if (fpsState.value.thirty) {
+                                Color.Blue
+                            } else {
+                                Color.White
+                            },
                             modifier = Modifier
                                 .size(38.dp)
-                                .clickable {
-                                    viewModel.setFpsValue(
-                                        lifecycleOwner,
-                                        30
-                                    )
-                                }
                         )
                         Text("30 fps", color = Color.White)
                     }
@@ -204,8 +245,14 @@ fun VideoFpsSettings(
 @Composable
 fun VideoQualitySettings(
     lifecycleOwner: LifecycleOwner,
-    viewModel: MainViewModel
+    setVideoQuality: (LifecycleOwner, Quality) -> Unit,
+    qualityState: MutableState<VideoSettingsViewModel.QualityState>
 ) {
+    val currentQuality by remember {
+        mutableStateOf(
+            qualityState.value
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -218,58 +265,76 @@ fun VideoQualitySettings(
             Text("Quality", color = MaterialTheme.colors.onPrimary)
             Spacer(modifier = Modifier.fillMaxWidth(fraction = 0.4f))
 
-            Row (
+            Row(
                 horizontalArrangement = Arrangement.End
-            ){
-                Row (
+            ) {
+                Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
-                ){
+                ) {
                     Column(
                         verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            qualityState.value =
+                                currentQuality.copy(ultraHd = true, fullHd = false, hd = false)
+                            setVideoQuality(lifecycleOwner, Quality.UHD)
+                        }
                     ) {
                         Icon(
-                            Icons.TwoTone.Hd,
+                            Icons.Default.Hd,
                             contentDescription = "4k",
-                            tint = Color.White,
+                            tint = if (qualityState.value.ultraHd) {
+                                Color.Blue
+                            } else {
+                                Color.White
+                            },
                             modifier = Modifier
                                 .size(38.dp)
-                                .clickable {
-                                    viewModel.setVideoQuality(lifecycleOwner, Quality.UHD)
-                                }
                         )
                         Text("4K", color = Color.White)
                     }
                     Column(
                         verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            qualityState.value =
+                                currentQuality.copy(ultraHd = false, fullHd = true, hd = false)
+                            setVideoQuality(lifecycleOwner, Quality.FHD)
+                        }
                     ) {
                         Icon(
-                            Icons.TwoTone.Hd,
+                            Icons.Default.Hd,
                             contentDescription = "1080p",
-                            tint = Color.White,
+                            tint = if (qualityState.value.fullHd) {
+                                Color.Blue
+                            } else {
+                                Color.White
+                            },
                             modifier = Modifier
                                 .size(38.dp)
-                                .clickable {
-                                    viewModel.setVideoQuality(lifecycleOwner, Quality.FHD)
-                                }
                         )
                         Text("1080p", color = Color.White)
                     }
                     Column(
                         verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            qualityState.value =
+                                currentQuality.copy(ultraHd = false, fullHd = false, hd = true)
+                            setVideoQuality(lifecycleOwner, Quality.HD)
+                        }
                     ) {
                         Icon(
-                            Icons.TwoTone.Hd,
+                            Icons.Default.Hd,
                             contentDescription = "720p",
-                            tint = Color.White,
+                            tint = if (qualityState.value.hd) {
+                                Color.Blue
+                            } else {
+                                Color.White
+                            },
                             modifier = Modifier
                                 .size(38.dp)
-                                .clickable {
-                                    viewModel.setVideoQuality(lifecycleOwner, Quality.HD)
-                                }
                         )
                         Text("720p", color = Color.White)
                     }
