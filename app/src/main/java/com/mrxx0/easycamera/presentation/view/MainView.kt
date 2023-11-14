@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Circle
@@ -147,7 +148,7 @@ fun CameraPreview(
                         }
                     })
             }
-            .height(screeHeight * 0.65f)
+            .height(screeHeight * 0.68f)
             .width(screenWidth)
 
     ) {
@@ -159,7 +160,7 @@ fun CameraPreview(
 
             },
             modifier = Modifier
-                .height(screeHeight * 0.65f)
+                .height(screeHeight * 0.68f)
                 .width(screenWidth)
         )
         if (showCard && !viewModel.videoRecording) {
@@ -190,14 +191,14 @@ fun ControlZone(
     ) { padding ->
         Box(
             modifier = Modifier
-                .height(screeHeight * 0.35f)
+                .height(screeHeight * 0.32f)
                 .fillMaxWidth()
                 .padding(padding)
         ) {
 
             Column(
                 modifier = Modifier
-                    .height(screeHeight * 0.35f)
+                    .height(screeHeight * 0.32f)
                     .align(Alignment.BottomEnd)
                     .background(Color.Black),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -206,7 +207,7 @@ fun ControlZone(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color.Black)
-                        .padding(start = 50.dp, end = 50.dp, top = 32.dp),
+                        .padding(start = 70.dp, end = 70.dp, top = 32.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ){
@@ -218,7 +219,7 @@ fun ControlZone(
                                 viewModel.switchCamera(lifecycleOwner, viewModel.cameraMode)
                             }
                         },
-                        modifier = Modifier.size(54.dp),
+                        modifier = Modifier.size(50.dp),
                         shape = CircleShape,
                         border = BorderStroke(2.dp, Color.White),
                         contentPadding = PaddingValues(8.dp),
@@ -227,7 +228,7 @@ fun ControlZone(
                             Icons.Default.Cameraswitch,
                             contentDescription = "Switch camera",
                             tint = Color.White,
-                            modifier = Modifier.size(54.dp)
+                            modifier = Modifier.size(30.dp)
                         )
                     }
                 }
@@ -235,18 +236,24 @@ fun ControlZone(
                     modifier = Modifier
                         .background(Color.Black)
                         .fillMaxHeight(),
-                    verticalArrangement = Arrangement.Bottom
+                    verticalArrangement = Arrangement.Bottom,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row (
                         modifier = Modifier.background(Color.Black),
                         horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
                     ){
                         Icon(
                             Icons.Default.PhotoCamera,
                             contentDescription = "Switch to image mode",
-                            tint = Color.White,
+                            tint = if (viewModel.cameraMode) {
+                                Color.DarkGray
+                            } else {
+                                Color.White
+                            },
                             modifier = Modifier
-                                .size(54.dp)
+                                .size(24.dp)
                                 .clickable {
                                     if (!viewModel.cameraMode) {
                                         viewModel.setMode(true)
@@ -255,13 +262,17 @@ fun ControlZone(
                                     }
                                 }
                         )
-                        Spacer(modifier = Modifier.size(10.dp))
+                        Spacer(modifier = Modifier.size(15.dp))
                         Icon(
                             Icons.Default.Videocam,
                             contentDescription = "Switch to video mode",
-                            tint = Color.White,
+                            tint = if (!viewModel.cameraMode) {
+                                Color.DarkGray
+                            } else {
+                                Color.White
+                            },
                             modifier = Modifier
-                                .size(54.dp)
+                                .size(30.dp)
                                 .clickable {
                                     if (viewModel.cameraMode) {
                                         viewModel.setMode(false)
@@ -271,6 +282,12 @@ fun ControlZone(
                                 }
                         )
                     }
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.Black)
+                            .height(15.dp)
+                    )
                 }
             }
         }
@@ -307,9 +324,9 @@ fun ShutterButton(
             }
 
         },
-        modifier = Modifier.size(80.dp),
+        modifier = Modifier.size(70.dp),
         shape = CircleShape,
-        border = BorderStroke(4.dp, Color.White),
+        border = BorderStroke(2.dp, Color.White),
         contentPadding = PaddingValues(4.dp),
         interactionSource = shutterInteractionSource
     ) {
@@ -326,7 +343,7 @@ fun ShutterButton(
 fun PreviewLastTakenImage(lastImageUri: MutableState<Uri?>, viewModel: MainViewModel, context: Context) {
     OutlinedButton(
         onClick = { },
-        modifier = Modifier.size(54.dp),
+        modifier = Modifier.size(50.dp),
         shape = CircleShape,
         border = BorderStroke(2.dp, Color.White),
         contentPadding = PaddingValues(1.dp),
@@ -357,7 +374,7 @@ fun PreviewLastTakenImage(lastImageUri: MutableState<Uri?>, viewModel: MainViewM
                 Icons.Default.HideImage,
                 contentDescription = "Access gallery",
                 tint = Color.White,
-                modifier = Modifier.size(54.dp)
+                modifier = Modifier.size(50.dp)
             )
         }
     }
