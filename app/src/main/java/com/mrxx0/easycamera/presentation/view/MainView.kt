@@ -1,5 +1,6 @@
 package com.mrxx0.easycamera.presentation.view
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -27,7 +28,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Circle
@@ -39,6 +39,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -62,6 +63,7 @@ import coil.decode.VideoFrameDecoder
 import com.mrxx0.easycamera.presentation.viewmodel.MainViewModel
 import kotlin.math.abs
 
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun MainView(
     viewModel: MainViewModel = hiltViewModel()
@@ -72,13 +74,13 @@ fun MainView(
     val configuration = LocalConfiguration.current
     val screeHeight = configuration.screenHeightDp.dp
     val screenWidth = configuration.screenWidthDp.dp
-
+    val showCard = mutableStateOf(false)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        CameraPreview(screenWidth, screeHeight, lifecycleOwner, viewModel)
-        ControlZone(screeHeight, lifecycleOwner, context, viewModel)
+        CameraPreview(screenWidth, screeHeight, lifecycleOwner, viewModel, showCard)
+        ControlZone(screeHeight, lifecycleOwner, context, viewModel, showCard)
     }
 }
 
@@ -87,11 +89,11 @@ fun CameraPreview(
     screenWidth: Dp,
     screeHeight: Dp,
     lifecycleOwner: LifecycleOwner,
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    showCard: MutableState<Boolean>
 ) {
     var previewView: PreviewView
-    var swapDirection by remember { mutableStateOf(-1)}
-    var showCard by remember { mutableStateOf(false)}
+    var swapDirection by remember { mutableIntStateOf(-1) }
     val context = LocalContext.current
     Box(
         modifier = Modifier
@@ -125,24 +127,24 @@ fun CameraPreview(
                     onDragEnd = {
                         when (swapDirection) {
                             0 -> {
-                                showCard = false
+                                showCard.value = false
                                 Log.d("EasyCamera", "RIGHT gesture detected")
                             }
 
                             1 -> {
-                                showCard = false
+                                showCard.value = false
                                 Log.d("EasyCamera", "LEFT gesture detected")
 
                             }
 
                             2 -> {
-                                showCard = true
+                                showCard.value = true
                                 Log.d("EasyCamera", "DOWN gesture detected")
 
                             }
 
                             3 -> {
-                                showCard = false
+                                showCard.value = false
                                 Log.d("EasyCamera", "UP gesture detected")
                             }
                         }
@@ -163,8 +165,8 @@ fun CameraPreview(
                 .height(screeHeight * 0.68f)
                 .width(screenWidth)
         )
-        if (showCard && !viewModel.videoRecording) {
-            SettingsCard(screeHeight, lifecycleOwner)
+        if (showCard.value && !viewModel.videoRecording) {
+            SettingsCard(lifecycleOwner)
         }
     }
 }
@@ -175,7 +177,8 @@ fun ControlZone(
     screeHeight: Dp,
     lifecycleOwner: LifecycleOwner,
     context: Context,
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    showCard: MutableState<Boolean>
 ) {
 
 
@@ -203,14 +206,14 @@ fun ControlZone(
                     .background(Color.Black),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Row (
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color.Black)
                         .padding(start = 70.dp, end = 70.dp, top = 32.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
-                ){
+                ) {
                     PreviewLastTakenImage(lastImageUri, viewModel, context)
                     ShutterButton(context, viewModel, lastImageUri, cameraMode.value)
                     OutlinedButton(
@@ -237,17 +240,19 @@ fun ControlZone(
                         .background(Color.Black)
                         .fillMaxHeight(),
                     verticalArrangement = Arrangement.Bottom,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Row (
+                    Row(
                         modifier = Modifier.background(Color.Black),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
-                    ){
+                    ) {
                         Icon(
                             Icons.Default.PhotoCamera,
                             contentDescription = "Switch to image mode",
-                            tint = if (viewModel.cameraMode) {
+                            tint = if (showCard.value) {
+                                Color.Gray
+                            } else if (viewModel.cameraMode) {
                                 Color.DarkGray
                             } else {
                                 Color.White
@@ -255,7 +260,7 @@ fun ControlZone(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clickable {
-                                    if (!viewModel.cameraMode) {
+                                    if (!showCard.value && !viewModel.cameraMode) {
                                         viewModel.setMode(true)
                                         cameraMode.value = true
                                         viewModel.setImageMode(lifecycleOwner)
@@ -266,7 +271,9 @@ fun ControlZone(
                         Icon(
                             Icons.Default.Videocam,
                             contentDescription = "Switch to video mode",
-                            tint = if (!viewModel.cameraMode) {
+                            tint = if (showCard.value) {
+                                Color.Gray
+                            } else if (!viewModel.cameraMode) {
                                 Color.DarkGray
                             } else {
                                 Color.White
@@ -274,7 +281,7 @@ fun ControlZone(
                             modifier = Modifier
                                 .size(30.dp)
                                 .clickable {
-                                    if (viewModel.cameraMode) {
+                                    if (!showCard.value && viewModel.cameraMode) {
                                         viewModel.setMode(false)
                                         cameraMode.value = false
                                         viewModel.setVideoMode(lifecycleOwner)
@@ -307,8 +314,7 @@ fun ShutterButton(
     val shutterButtonColor = if (isShutterPressed) {
         Color.DarkGray
     } else {
-        if (cameraMode)
-        {
+        if (cameraMode) {
             Color.White
         } else {
             Color.Red
@@ -318,9 +324,9 @@ fun ShutterButton(
     OutlinedButton(
         onClick = {
             if (cameraMode) {
-                viewModel.takeImage(context, lastImageUri, viewModel.timerMode)
+                viewModel.takeImage(context, lastImageUri, viewModel.mainTimer)
             } else {
-                viewModel.takeVideo(context, lastImageUri, viewModel.timerMode, viewModel)
+                viewModel.takeVideo(context, lastImageUri, viewModel)
             }
 
         },
@@ -340,7 +346,11 @@ fun ShutterButton(
 }
 
 @Composable
-fun PreviewLastTakenImage(lastImageUri: MutableState<Uri?>, viewModel: MainViewModel, context: Context) {
+fun PreviewLastTakenImage(
+    lastImageUri: MutableState<Uri?>,
+    viewModel: MainViewModel,
+    context: Context
+) {
     OutlinedButton(
         onClick = { },
         modifier = Modifier.size(50.dp),
