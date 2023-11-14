@@ -8,4 +8,6 @@
 
 <h2>Project Screenshots:</h2>
 
-<img src="https://github.com/mrxx0/easycamera/blob/main/data/mockup_easycamera.jpg" alt="project-screenshot" width="30%" height="30%/">
+<p align="center">
+<img src="https://github.com/mrxx0/easycamera/blob/main/data/mockup_easycamera.jpg" alt="project-screenshot" width="80%" height="80%/">
+</p>
