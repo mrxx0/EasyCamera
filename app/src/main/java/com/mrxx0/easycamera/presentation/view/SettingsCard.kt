@@ -4,8 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleOwner
 import com.mrxx0.easycamera.presentation.viewmodel.ImageSettingsViewModel
-import com.mrxx0.easycamera.presentation.viewmodel.VideoSettingsViewModel
 import com.mrxx0.easycamera.presentation.viewmodel.MainViewModel
+import com.mrxx0.easycamera.presentation.viewmodel.VideoSettingsViewModel
 
 @Composable
 fun SettingsCard(

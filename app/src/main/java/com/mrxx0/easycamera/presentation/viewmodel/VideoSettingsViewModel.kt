@@ -147,6 +147,7 @@ class VideoSettingsViewModel @Inject constructor(
             cameraControl.cameraControl.enableTorch(flash.value)
         }
     }
+
     @OptIn(ExperimentalCamera2Interop::class)
     fun setFps(
         cameraControl: Camera?,
@@ -161,14 +162,16 @@ class VideoSettingsViewModel @Inject constructor(
     }
 
     data class FpsState(
-        var sixty: Boolean ,
+        var sixty: Boolean,
         var thirty: Boolean
     )
-    data class QualityState (
+
+    data class QualityState(
         var ultraHd: Boolean,
-        var fullHd : Boolean,
-        var hd : Boolean
+        var fullHd: Boolean,
+        var hd: Boolean
     )
+
     data class FlashState(
         var off: Boolean,
         var on: Boolean

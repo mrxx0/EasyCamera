@@ -84,9 +84,11 @@ fun ImageTimerSettings(
     setTimerMode: (Int) -> Unit,
     timerState: MutableState<ImageSettingsViewModel.TimerState>,
 ) {
-    val currentTimer by remember { mutableStateOf(
-        timerState.value
-    ) }
+    val currentTimer by remember {
+        mutableStateOf(
+            timerState.value
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -111,7 +113,8 @@ fun ImageTimerSettings(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.clickable {
-                            timerState.value = currentTimer.copy(off = true, three = false, ten = false)
+                            timerState.value =
+                                currentTimer.copy(off = true, three = false, ten = false)
                             setTimerMode(0)
                         }
                     ) {
@@ -122,7 +125,7 @@ fun ImageTimerSettings(
                                 Color.Blue
                             } else {
                                 Color.White
-                                   },
+                            },
                             modifier = Modifier
                                 .size(38.dp)
 
@@ -133,7 +136,8 @@ fun ImageTimerSettings(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.clickable {
-                            timerState.value = currentTimer.copy(off = false, three = true, ten = false)
+                            timerState.value =
+                                currentTimer.copy(off = false, three = true, ten = false)
                             setTimerMode(3)
                         }
                     ) {
@@ -154,7 +158,8 @@ fun ImageTimerSettings(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.clickable {
-                            timerState.value = currentTimer.copy(off = false, three = false, ten = true)
+                            timerState.value =
+                                currentTimer.copy(off = false, three = false, ten = true)
                             setTimerMode(10)
                         }
                     ) {
@@ -183,9 +188,11 @@ fun ImageFlashSettings(
     setFlashMode: (LifecycleOwner, Int) -> Unit,
     flashState: MutableState<ImageSettingsViewModel.FlashState>,
 ) {
-    val currentFlash by remember { mutableStateOf(
-        flashState.value
-    ) }
+    val currentFlash by remember {
+        mutableStateOf(
+            flashState.value
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -209,7 +216,11 @@ fun ImageFlashSettings(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.clickable {
-                            flashState.value = currentFlash.copy(flashAuto = true, flashOn = false, flashOff = false)
+                            flashState.value = currentFlash.copy(
+                                flashAuto = true,
+                                flashOn = false,
+                                flashOff = false
+                            )
                             setFlashMode(
                                 lifecycleOwner,
                                 ImageCapture.FLASH_MODE_AUTO
@@ -233,7 +244,11 @@ fun ImageFlashSettings(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.clickable {
-                            flashState.value = currentFlash.copy(flashAuto = false, flashOn = true, flashOff = false)
+                            flashState.value = currentFlash.copy(
+                                flashAuto = false,
+                                flashOn = true,
+                                flashOff = false
+                            )
                             setFlashMode(
                                 lifecycleOwner,
                                 ImageCapture.FLASH_MODE_ON
@@ -257,13 +272,17 @@ fun ImageFlashSettings(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.clickable {
-                            flashState.value = currentFlash.copy(flashAuto = false, flashOn = false, flashOff = true)
+                            flashState.value = currentFlash.copy(
+                                flashAuto = false,
+                                flashOn = false,
+                                flashOff = true
+                            )
                             setFlashMode(
                                 lifecycleOwner,
                                 ImageCapture.FLASH_MODE_OFF
                             )
                         }
-                        ) {
+                    ) {
                         Icon(
                             Icons.Default.FlashOff,
                             contentDescription = "Flash Off",
@@ -289,9 +308,11 @@ fun ImageRatioSettings(
     setAspectRatio: (LifecycleOwner, Int) -> Unit,
     ratioState: MutableState<ImageSettingsViewModel.RatioState>,
 ) {
-    val currentRatio by remember { mutableStateOf(
-        ratioState.value
-    ) }
+    val currentRatio by remember {
+        mutableStateOf(
+            ratioState.value
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -315,7 +336,8 @@ fun ImageRatioSettings(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.clickable {
-                            ratioState.value = currentRatio.copy(threeByFour = true, nineBySixteen = false)
+                            ratioState.value =
+                                currentRatio.copy(threeByFour = true, nineBySixteen = false)
                             setAspectRatio(
                                 lifecycleOwner,
                                 AspectRatio.RATIO_4_3
@@ -340,7 +362,8 @@ fun ImageRatioSettings(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.clickable {
-                            ratioState.value = currentRatio.copy(threeByFour = false, nineBySixteen = true)
+                            ratioState.value =
+                                currentRatio.copy(threeByFour = false, nineBySixteen = true)
                             setAspectRatio(
                                 lifecycleOwner,
                                 AspectRatio.RATIO_16_9
@@ -350,7 +373,7 @@ fun ImageRatioSettings(
                         Icon(
                             Icons.Default.AspectRatio,
                             contentDescription = "Crop 9:16",
-                            tint = if ( ratioState.value.nineBySixteen) {
+                            tint = if (ratioState.value.nineBySixteen) {
                                 Color.Blue
                             } else {
                                 Color.White

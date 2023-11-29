@@ -68,20 +68,21 @@ object Module {
 
     @Provides
     @Singleton
-    fun provideCameraProvider(application: Application):ProcessCameraProvider{
+    fun provideCameraProvider(application: Application): ProcessCameraProvider {
         return ProcessCameraProvider.getInstance(application).get()
     }
 
     @Provides
     @Singleton
-    fun provideCameraPreview():Preview{
+    fun provideCameraPreview(): Preview {
         return Preview.Builder().build()
     }
 
     @Provides
     @Singleton
-    fun provideImageCapture():ImageCapture{
-        val defaultAspectRatioStrategy = AspectRatioStrategy(AspectRatio.RATIO_4_3, AspectRatioStrategy.FALLBACK_RULE_AUTO)
+    fun provideImageCapture(): ImageCapture {
+        val defaultAspectRatioStrategy =
+            AspectRatioStrategy(AspectRatio.RATIO_4_3, AspectRatioStrategy.FALLBACK_RULE_AUTO)
         return ImageCapture.Builder()
             .setFlashMode(ImageCapture.FLASH_MODE_AUTO)
             .setCaptureMode(CAPTURE_MODE_MAXIMIZE_QUALITY)
@@ -116,7 +117,7 @@ object Module {
 
     @Provides
     @Singleton
-    fun provideImageAnalysis():ImageAnalysis{
+    fun provideImageAnalysis(): ImageAnalysis {
         return ImageAnalysis.Builder()
             .setBackpressureStrategy(STRATEGY_KEEP_ONLY_LATEST)
             .build()
@@ -132,7 +133,7 @@ object Module {
         videoCapture: VideoCapture<Recorder>,
         recording: Recording?,
         imageAnalysis: ImageAnalysis,
-    ):EasyCameraRepository {
+    ): EasyCameraRepository {
         return EasyCameraRepositoryImplementation(
             cameraProvider,
             cameraSelector,
