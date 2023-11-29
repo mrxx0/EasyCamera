@@ -81,8 +81,10 @@ class ImageSettingsViewModel @Inject constructor() : ViewModel() {
 
     fun setAspectRatio(
         aspectRatio: Int,
+        fullscreen: MutableState<Boolean>
     ): ImageCapture {
 
+        fullscreen.value = aspectRatio == AspectRatio.RATIO_16_9
         ratio.intValue = aspectRatio
         val newAspectRatioStrategy =
             AspectRatioStrategy(aspectRatio, AspectRatioStrategy.FALLBACK_RULE_AUTO)
@@ -117,15 +119,21 @@ class ImageSettingsViewModel @Inject constructor() : ViewModel() {
             .build()
     }
 
+    fun getRatio(): Int {
+        return ratio.intValue
+    }
+
     data class RatioState(
-        var threeByFour: Boolean ,
+        var threeByFour: Boolean,
         var nineBySixteen: Boolean
     )
-    data class FlashState (
+
+    data class FlashState(
         var flashAuto: Boolean,
-        var flashOn : Boolean,
-        var flashOff : Boolean
+        var flashOn: Boolean,
+        var flashOff: Boolean
     )
+
     data class TimerState(
         var off: Boolean,
         var three: Boolean,

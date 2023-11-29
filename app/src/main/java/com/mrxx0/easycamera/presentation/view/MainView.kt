@@ -69,7 +69,6 @@ fun MainView(
     viewModel: MainViewModel = hiltViewModel()
 ) {
 
-    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val configuration = LocalConfiguration.current
     val screeHeight = configuration.screenHeightDp.dp
@@ -80,10 +79,10 @@ fun MainView(
         verticalArrangement = Arrangement.Center
     ) {
         CameraPreview(screenWidth, screeHeight, lifecycleOwner, viewModel, showCard)
-        ControlZone(screeHeight, lifecycleOwner, context, viewModel, showCard)
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun CameraPreview(
     screenWidth: Dp,
@@ -95,96 +94,8 @@ fun CameraPreview(
     var previewView: PreviewView
     var swapDirection by remember { mutableIntStateOf(-1) }
     val context = LocalContext.current
-    Box(
-        modifier = Modifier
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        val (x, y) = dragAmount
-                        if (abs(x) > abs(y)) {
-                            when {
-                                x > 0 -> {
-                                    swapDirection = 0
-                                }
-
-                                x < 0 -> {
-                                    swapDirection = 1
-                                }
-                            }
-                        } else {
-                            when {
-                                y > 0 -> {
-                                    swapDirection = 2
-                                }
-
-                                y < 0 -> {
-                                    swapDirection = 3
-                                }
-                            }
-                        }
-                    },
-                    onDragEnd = {
-                        when (swapDirection) {
-                            0 -> {
-                                showCard.value = false
-                                Log.d("EasyCamera", "RIGHT gesture detected")
-                            }
-
-                            1 -> {
-                                showCard.value = false
-                                Log.d("EasyCamera", "LEFT gesture detected")
-
-                            }
-
-                            2 -> {
-                                showCard.value = true
-                                Log.d("EasyCamera", "DOWN gesture detected")
-
-                            }
-
-                            3 -> {
-                                showCard.value = false
-                                Log.d("EasyCamera", "UP gesture detected")
-                            }
-                        }
-                    })
-            }
-            .height(screeHeight * 0.68f)
-            .width(screenWidth)
-
-    ) {
-        AndroidView(
-            factory = {
-                previewView = PreviewView(it)
-                viewModel.showCameraPreview(previewView, lifecycleOwner, context)
-                previewView
-
-            },
-            modifier = Modifier
-                .height(screeHeight * 0.68f)
-                .width(screenWidth)
-        )
-        if (showCard.value && !viewModel.videoRecording) {
-            SettingsCard(lifecycleOwner)
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun ControlZone(
-    screeHeight: Dp,
-    lifecycleOwner: LifecycleOwner,
-    context: Context,
-    viewModel: MainViewModel,
-    showCard: MutableState<Boolean>
-) {
-
-
-    val lastImageUri = remember { mutableStateOf(viewModel.getLastImageUri(context)) }
-    val cameraMode = remember { mutableStateOf(viewModel.getMode()) }
     val scaffoldState = rememberBottomSheetScaffoldState()
+
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetPeekHeight = 0.dp,
@@ -194,109 +105,231 @@ fun ControlZone(
     ) { padding ->
         Box(
             modifier = Modifier
-                .height(screeHeight * 0.32f)
+                .height(screeHeight)
                 .fillMaxWidth()
                 .padding(padding)
         ) {
-
-            Column(
+            Box(
                 modifier = Modifier
-                    .height(screeHeight * 0.32f)
+                    .pointerInput(Unit) {
+                        detectDragGestures(
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                val (x, y) = dragAmount
+                                if (abs(x) > abs(y)) {
+                                    when {
+                                        x > 0 -> {
+                                            swapDirection = 0
+                                        }
+
+                                        x < 0 -> {
+                                            swapDirection = 1
+                                        }
+                                    }
+                                } else {
+                                    when {
+                                        y > 0 -> {
+                                            swapDirection = 2
+                                        }
+
+                                        y < 0 -> {
+                                            swapDirection = 3
+                                        }
+                                    }
+                                }
+                            },
+                            onDragEnd = {
+                                when (swapDirection) {
+                                    0 -> {
+                                        showCard.value = false
+                                        Log.d("EasyCamera", "RIGHT gesture detected")
+                                    }
+
+                                    1 -> {
+                                        showCard.value = false
+                                        Log.d("EasyCamera", "LEFT gesture detected")
+
+                                    }
+
+                                    2 -> {
+                                        showCard.value = true
+                                        Log.d("EasyCamera", "DOWN gesture detected")
+
+                                    }
+
+                                    3 -> {
+                                        showCard.value = false
+                                        Log.d("EasyCamera", "UP gesture detected")
+                                    }
+                                }
+                            })
+                    }
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+
+            ) {
+                AndroidView(
+                    factory = {
+                        previewView = PreviewView(it)
+                        viewModel.showCameraPreview(previewView, lifecycleOwner, context)
+                        previewView
+
+                    },
+                    modifier = Modifier
+                        .height(
+                            if (viewModel.fullscreen.value) {
+                                screeHeight
+                            } else {
+                                screeHeight * 0.75f
+                            }
+                        )
+                        .width(screenWidth)
+                )
+                if (showCard.value && !viewModel.videoRecording) {
+                    SettingsCard(lifecycleOwner)
+                }
+                val mod = Modifier
                     .align(Alignment.BottomEnd)
-                    .background(Color.Black),
+                    .fillMaxWidth()
+                ControlZone(screeHeight, lifecycleOwner, context, viewModel, showCard, mod)
+            }
+        }
+    }
+
+
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun ControlZone(
+    screeHeight: Dp,
+    lifecycleOwner: LifecycleOwner,
+    context: Context,
+    viewModel: MainViewModel,
+    showCard: MutableState<Boolean>,
+    modifier: Modifier
+) {
+
+    val lastImageUri = remember { mutableStateOf(viewModel.getLastImageUri(context)) }
+    val cameraMode = remember { mutableStateOf(viewModel.getMode()) }
+
+    Column(
+        modifier = modifier
+            .height(screeHeight * 0.32f)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        val modifierRow = if (viewModel.fullscreen.value) {
+            Modifier
+                .fillMaxWidth()
+                .background(Color.Transparent)
+                .padding(start = 70.dp, end = 70.dp, top = 32.dp)
+        } else {
+            Modifier
+                .fillMaxWidth()
+                .background(Color.Black)
+                .padding(start = 70.dp, end = 70.dp, top = 32.dp)
+        }
+        Row(
+            modifier = modifierRow,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            PreviewLastTakenImage(lastImageUri, viewModel, context)
+            ShutterButton(context, viewModel, lastImageUri, cameraMode.value)
+            OutlinedButton(
+                onClick = {
+                    if (!viewModel.videoRecording) {
+                        viewModel.switchCamera(lifecycleOwner, viewModel.cameraMode)
+                    }
+                },
+                modifier = Modifier.size(50.dp),
+                shape = CircleShape,
+                border = BorderStroke(2.dp, Color.White),
+                contentPadding = PaddingValues(8.dp),
+            ) {
+                Icon(
+                    Icons.Default.Cameraswitch,
+                    contentDescription = "Switch camera",
+                    tint = Color.White,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
+        val modifierColumn = if (viewModel.fullscreen.value) {
+            Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .background(Color.Transparent)
+        } else {
+            Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .background(Color.Black)
+        }
+        Column(
+            modifier = modifierColumn,
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Column(
+                modifier = modifierColumn.height(30.dp),
+                verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.Black)
-                        .padding(start = 70.dp, end = 70.dp, top = 32.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    PreviewLastTakenImage(lastImageUri, viewModel, context)
-                    ShutterButton(context, viewModel, lastImageUri, cameraMode.value)
-                    OutlinedButton(
-                        onClick = {
-                            if (!viewModel.videoRecording) {
-                                viewModel.switchCamera(lifecycleOwner, viewModel.cameraMode)
-                            }
+                    Icon(
+                        Icons.Default.PhotoCamera,
+                        contentDescription = "Switch to image mode",
+                        tint = if (showCard.value) {
+                            Color.Gray
+                        } else if (viewModel.cameraMode) {
+                            Color.DarkGray
+                        } else {
+                            Color.White
                         },
-                        modifier = Modifier.size(50.dp),
-                        shape = CircleShape,
-                        border = BorderStroke(2.dp, Color.White),
-                        contentPadding = PaddingValues(8.dp),
-                    ) {
-                        Icon(
-                            Icons.Default.Cameraswitch,
-                            contentDescription = "Switch camera",
-                            tint = Color.White,
-                            modifier = Modifier.size(30.dp)
-                        )
-                    }
-                }
-                Column(
-                    modifier = Modifier
-                        .background(Color.Black)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.Bottom,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Row(
-                        modifier = Modifier.background(Color.Black),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default.PhotoCamera,
-                            contentDescription = "Switch to image mode",
-                            tint = if (showCard.value) {
-                                Color.Gray
-                            } else if (viewModel.cameraMode) {
-                                Color.DarkGray
-                            } else {
-                                Color.White
-                            },
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clickable {
-                                    if (!showCard.value && !viewModel.cameraMode) {
-                                        viewModel.setMode(true)
-                                        cameraMode.value = true
-                                        viewModel.setImageMode(lifecycleOwner)
-                                    }
-                                }
-                        )
-                        Spacer(modifier = Modifier.size(15.dp))
-                        Icon(
-                            Icons.Default.Videocam,
-                            contentDescription = "Switch to video mode",
-                            tint = if (showCard.value) {
-                                Color.Gray
-                            } else if (!viewModel.cameraMode) {
-                                Color.DarkGray
-                            } else {
-                                Color.White
-                            },
-                            modifier = Modifier
-                                .size(30.dp)
-                                .clickable {
-                                    if (!showCard.value && viewModel.cameraMode) {
-                                        viewModel.setMode(false)
-                                        cameraMode.value = false
-                                        viewModel.setVideoMode(lifecycleOwner)
-                                    }
-                                }
-                        )
-                    }
-                    Spacer(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.Black)
-                            .height(15.dp)
+                            .size(24.dp)
+                            .clickable {
+                                if (!showCard.value && !viewModel.cameraMode) {
+                                    viewModel.setMode(true)
+                                    cameraMode.value = true
+                                    viewModel.setImageMode(lifecycleOwner)
+                                }
+                            }
+                    )
+                    Spacer(modifier = Modifier.size(15.dp))
+                    Icon(
+                        Icons.Default.Videocam,
+                        contentDescription = "Switch to video mode",
+                        tint = if (showCard.value) {
+                            Color.Gray
+                        } else if (!viewModel.cameraMode) {
+                            Color.DarkGray
+                        } else {
+                            Color.White
+                        },
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clickable {
+                                if (!showCard.value && viewModel.cameraMode) {
+                                    viewModel.setMode(false)
+                                    cameraMode.value = false
+                                    viewModel.setVideoMode(lifecycleOwner)
+                                }
+                            }
                     )
                 }
             }
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Black)
+                    .height(15.dp)
+            )
         }
     }
 }

@@ -10,6 +10,7 @@ import androidx.annotation.OptIn
 import androidx.camera.camera2.interop.Camera2CameraControl
 import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
+import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -23,10 +24,10 @@ import androidx.camera.video.VideoCapture
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.LifecycleOwner
-import com.mrxx0.easycamera.presentation.viewmodel.ImageSettingsViewModel
-import com.mrxx0.easycamera.presentation.viewmodel.VideoSettingsViewModel
 import com.mrxx0.easycamera.domain.repository.EasyCameraRepository
+import com.mrxx0.easycamera.presentation.viewmodel.ImageSettingsViewModel
 import com.mrxx0.easycamera.presentation.viewmodel.MainViewModel
+import com.mrxx0.easycamera.presentation.viewmodel.VideoSettingsViewModel
 import javax.inject.Inject
 
 class EasyCameraRepositoryImplementation @Inject constructor(
@@ -39,7 +40,7 @@ class EasyCameraRepositoryImplementation @Inject constructor(
     private val imageAnalysis: ImageAnalysis,
 ) : EasyCameraRepository {
 
-    private var camControl : Camera? = null
+    private var camControl: Camera? = null
     private val imageCamera = ImageSettingsViewModel()
     private val videoCamera = VideoSettingsViewModel(recording)
 
@@ -62,8 +63,7 @@ class EasyCameraRepositoryImplementation @Inject constructor(
             }
         }
         val scaleGestureDetector = ScaleGestureDetector(context, listener)
-        previewView.setOnTouchListener {
-                _, event ->
+        previewView.setOnTouchListener { _, event ->
             scaleGestureDetector.onTouchEvent(event)
             return@setOnTouchListener true
         }
@@ -95,7 +95,7 @@ class EasyCameraRepositoryImplementation @Inject constructor(
             imageCamera.takePicture(
                 context, lastImageUri, imageCapture, timerMode
             )
-        } catch (e : Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
@@ -116,9 +116,10 @@ class EasyCameraRepositoryImplementation @Inject constructor(
 
     override suspend fun setAspectRatio(
         lifecycleOwner: LifecycleOwner,
-        aspectRatio: Int
+        aspectRatio: Int,
+        fullscreen: MutableState<Boolean>
     ) {
-        imageCapture = imageCamera.setAspectRatio(aspectRatio)
+        imageCapture = imageCamera.setAspectRatio(aspectRatio, fullscreen)
         updateImageCameraUseCase(lifecycleOwner)
 
     }
@@ -132,12 +133,15 @@ class EasyCameraRepositoryImplementation @Inject constructor(
     }
 
     override suspend fun imageMode(
-        lifecycleOwner: LifecycleOwner
+        lifecycleOwner: LifecycleOwner,
+        fullscreen: MutableState<Boolean>
     ) {
+        fullscreen.value = imageCamera.getRatio() == AspectRatio.RATIO_16_9
         updateImageCameraUseCase(lifecycleOwner)
     }
 
-    @OptIn(ExperimentalCamera2Interop::class) override suspend fun videoMode(
+    @OptIn(ExperimentalCamera2Interop::class)
+    override suspend fun videoMode(
         lifecycleOwner: LifecycleOwner
     ) {
         updateVideoCameraUseCase(lifecycleOwner)
@@ -161,10 +165,11 @@ class EasyCameraRepositoryImplementation @Inject constructor(
         lifecycleOwner: LifecycleOwner,
         flashMode: Boolean
     ) {
-       videoCamera.setFlash(camControl, flashMode)
+        videoCamera.setFlash(camControl, flashMode)
     }
 
-    @OptIn(ExperimentalCamera2Interop::class) override suspend fun setVideoFPS(
+    @OptIn(ExperimentalCamera2Interop::class)
+    override suspend fun setVideoFPS(
         fpsValue: Int
     ) {
         videoCamera.setFps(camControl, fpsValue)

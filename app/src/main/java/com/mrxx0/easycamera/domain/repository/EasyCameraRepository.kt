@@ -14,10 +14,12 @@ interface EasyCameraRepository {
         lifecycleOwner: LifecycleOwner,
         context: Context
     )
+
     suspend fun switchCamera(
         lifecycleOwner: LifecycleOwner,
         cameraMode: Boolean
     )
+
     suspend fun takeImage(
         context: Context,
         lastImageUri: MutableState<Uri?>,
@@ -32,7 +34,8 @@ interface EasyCameraRepository {
 
     suspend fun setAspectRatio(
         lifecycleOwner: LifecycleOwner,
-        aspectRatio: Int
+        aspectRatio: Int,
+        fullscreen: MutableState<Boolean>
     )
 
     suspend fun setImageFlashMode(
@@ -41,11 +44,14 @@ interface EasyCameraRepository {
     )
 
     suspend fun imageMode(
-        lifecycleOwner: LifecycleOwner
+        lifecycleOwner: LifecycleOwner,
+        fullscreen: MutableState<Boolean>
     )
+
     suspend fun videoMode(
         lifecycleOwner: LifecycleOwner
     )
+
     suspend fun setVideoResolution(
         lifecycleOwner: LifecycleOwner,
         videoQuality: Quality
