@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
@@ -76,7 +77,7 @@ fun MainView(
     val showCard = mutableStateOf(false)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         CameraPreview(screenWidth, screeHeight, lifecycleOwner, viewModel, showCard)
     }
@@ -97,6 +98,9 @@ fun CameraPreview(
     val scaffoldState = rememberBottomSheetScaffoldState()
 
     BottomSheetScaffold(
+        modifier = Modifier
+            .background(Color.Black)
+            .padding(10.dp),
         scaffoldState = scaffoldState,
         sheetPeekHeight = 0.dp,
         sheetContent = {
@@ -107,7 +111,7 @@ fun CameraPreview(
             modifier = Modifier
                 .height(screeHeight)
                 .fillMaxWidth()
-                .padding(padding)
+                .padding(padding),
         ) {
             Box(
                 modifier = Modifier
@@ -166,6 +170,7 @@ fun CameraPreview(
                     }
                     .fillMaxWidth()
                     .fillMaxHeight()
+                    .background(Color.Black)
 
             ) {
                 AndroidView(
@@ -178,20 +183,28 @@ fun CameraPreview(
                     modifier = Modifier
                         .height(
                             if (viewModel.fullscreen.value) {
-                                screeHeight
+                                screeHeight * 0.8f
                             } else {
-                                screeHeight * 0.75f
+                                screeHeight * 0.6f
                             }
                         )
                         .width(screenWidth)
+                        .fillMaxHeight()
+                        .clip(
+                            RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp)
+                        )
+                        .background(Color.Black)
                 )
                 if (showCard.value && !viewModel.videoRecording) {
                     SettingsCard(lifecycleOwner)
                 }
-                val mod = Modifier
-                    .align(Alignment.BottomEnd)
-                    .fillMaxWidth()
-                ControlZone(screeHeight, lifecycleOwner, context, viewModel, showCard, mod)
+                ControlZone(screeHeight,
+                    lifecycleOwner,
+                    context,
+                    viewModel,
+                    showCard,
+                    modifier = Modifier
+                    .align(Alignment.BottomEnd))
             }
         }
     }
@@ -199,7 +212,6 @@ fun CameraPreview(
 
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ControlZone(
     screeHeight: Dp,
@@ -215,9 +227,9 @@ fun ControlZone(
 
     Column(
         modifier = modifier
-            .height(screeHeight * 0.32f)
             .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Bottom
     ) {
         val modifierRow = if (viewModel.fullscreen.value) {
             Modifier
@@ -259,77 +271,87 @@ fun ControlZone(
         val modifierColumn = if (viewModel.fullscreen.value) {
             Modifier
                 .fillMaxWidth()
-                .fillMaxHeight()
                 .background(Color.Transparent)
         } else {
             Modifier
                 .fillMaxWidth()
-                .fillMaxHeight()
                 .background(Color.Black)
         }
+        ImageModeSwitch(modifier = modifierColumn,
+            lifecycleOwner = lifecycleOwner,
+            showCard = showCard,
+            viewModel = viewModel,
+            cameraMode = cameraMode,
+            screeHeight = screeHeight)
+    }
+}
+
+@Composable
+fun ImageModeSwitch(
+    modifier: Modifier,
+    lifecycleOwner: LifecycleOwner,
+    showCard: MutableState<Boolean>,
+    viewModel: MainViewModel,
+    cameraMode: MutableState<Boolean>,
+    screeHeight: Dp
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Column(
-            modifier = modifierColumn,
+            modifier = modifier.height(screeHeight* 0.2f),
             verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier = modifierColumn.height(30.dp),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.PhotoCamera,
-                        contentDescription = "Switch to image mode",
-                        tint = if (showCard.value) {
-                            Color.Gray
-                        } else if (viewModel.cameraMode) {
-                            Color.DarkGray
-                        } else {
-                            Color.White
-                        },
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clickable {
-                                if (!showCard.value && !viewModel.cameraMode) {
-                                    viewModel.setMode(true)
-                                    cameraMode.value = true
-                                    viewModel.setImageMode(lifecycleOwner)
-                                }
+                Icon(
+                    Icons.Default.PhotoCamera,
+                    contentDescription = "Switch to image mode",
+                    tint = if (showCard.value) {
+                        Color.Gray
+                    } else if (viewModel.cameraMode) {
+                        Color.DarkGray
+                    } else {
+                        Color.White
+                    },
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable {
+                            if (!showCard.value && !viewModel.cameraMode) {
+                                viewModel.setMode(true)
+                                cameraMode.value = true
+                                viewModel.setImageMode(lifecycleOwner)
                             }
-                    )
-                    Spacer(modifier = Modifier.size(15.dp))
-                    Icon(
-                        Icons.Default.Videocam,
-                        contentDescription = "Switch to video mode",
-                        tint = if (showCard.value) {
-                            Color.Gray
-                        } else if (!viewModel.cameraMode) {
-                            Color.DarkGray
-                        } else {
-                            Color.White
-                        },
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clickable {
-                                if (!showCard.value && viewModel.cameraMode) {
-                                    viewModel.setMode(false)
-                                    cameraMode.value = false
-                                    viewModel.setVideoMode(lifecycleOwner)
-                                }
+                        }
+                )
+                Spacer(modifier = Modifier.size(15.dp))
+                Icon(
+                    Icons.Default.Videocam,
+                    contentDescription = "Switch to video mode",
+                    tint = if (showCard.value) {
+                        Color.Gray
+                    } else if (!viewModel.cameraMode) {
+                        Color.DarkGray
+                    } else {
+                        Color.White
+                    },
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clickable {
+                            if (!showCard.value && viewModel.cameraMode) {
+                                viewModel.setMode(false)
+                                cameraMode.value = false
+                                viewModel.setVideoMode(lifecycleOwner)
                             }
-                    )
-                }
+                        }
+                )
             }
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.Black)
-                    .height(15.dp)
-            )
         }
     }
 }
