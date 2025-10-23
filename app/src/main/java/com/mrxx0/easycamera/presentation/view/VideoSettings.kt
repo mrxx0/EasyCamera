@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesomeMotion
 import androidx.compose.material.icons.filled.FlashOff
@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LifecycleOwner
@@ -51,7 +52,7 @@ fun VideoSettings(
             .padding(12.dp)
             .padding(top = 50.dp)
             .clip(shape = RoundedCornerShape(15.dp))
-            .background(Color.DarkGray),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         Column(
             modifier = Modifier
@@ -64,7 +65,7 @@ fun VideoSettings(
                     .padding(15.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text("Video", color = Color.White, fontSize = 20.sp)
+                Text("Video", color = MaterialTheme.colorScheme.onBackground, fontSize = 20.sp)
             }
             VideoFpsSettings(setFpsValue, fpsState)
             VideoQualitySettings(lifecycleOwner, setVideoQuality, qualityState)
@@ -93,7 +94,7 @@ fun VideoFlashSettings(
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Flash", color = MaterialTheme.colors.onPrimary)
+            Text("Flash", color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.fillMaxWidth(fraction = 0.4f))
 
             Row(
@@ -103,6 +104,10 @@ fun VideoFlashSettings(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
+                    val onColor = if (flashState.value.on)
+                        MaterialTheme.colorScheme.secondary
+                    else
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.28f)
                     Column(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -117,39 +122,31 @@ fun VideoFlashSettings(
                         Icon(
                             Icons.Default.FlashOn,
                             contentDescription = "Flash On",
-                            tint = if (flashState.value.on) {
-                                Color.Blue
-                            } else {
-                                Color.White
-                            },
-                            modifier = Modifier
-                                .size(38.dp)
+                            tint = onColor,
+                            modifier = Modifier.size(38.dp)
                         )
-                        Text("On", color = Color.White)
+                        Text("On", color = onColor,
+                            fontWeight = if (flashState.value.on) FontWeight.Bold else FontWeight.Normal)
                     }
+                    val offColor = if (flashState.value.off)
+                        MaterialTheme.colorScheme.secondary
+                    else
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     Column(
-                        verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.clickable {
                             flashState.value = currentFlash.copy(off = true, on = false)
-                            setVideoFlash(
-                                lifecycleOwner,
-                                false
-                            )
+                            setVideoFlash(lifecycleOwner, false)
                         }
                     ) {
                         Icon(
                             Icons.Default.FlashOff,
                             contentDescription = "Flash Off",
-                            tint = if (flashState.value.off) {
-                                Color.Blue
-                            } else {
-                                Color.White
-                            },
-                            modifier = Modifier
-                                .size(38.dp)
+                            tint = offColor,
+                            modifier = Modifier.size(38.dp)
                         )
-                        Text("Off", color = Color.White)
+                        Text("Off", color = offColor,
+                            fontWeight = if (flashState.value.off) FontWeight.Bold else FontWeight.Normal)
                     }
                 }
             }
@@ -178,7 +175,7 @@ fun VideoFpsSettings(
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Frame/sec", color = MaterialTheme.colors.onPrimary)
+            Text("Frame/sec", color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.fillMaxWidth(fraction = 0.4f))
 
             Row(
@@ -188,6 +185,10 @@ fun VideoFpsSettings(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
+                    val sixtyColor = if (fpsState.value.sixty)
+                        MaterialTheme.colorScheme.secondary
+                    else
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.28f)
                     Column(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -201,17 +202,17 @@ fun VideoFpsSettings(
                         Icon(
                             Icons.Default.AutoAwesomeMotion,
                             contentDescription = "60fps",
-                            tint = if (fpsState.value.sixty) {
-                                Color.Blue
-                            } else {
-                                Color.White
-                            },
-                            modifier = Modifier
-                                .size(38.dp)
-
+                            tint = sixtyColor,
+                            modifier = Modifier.size(38.dp)
                         )
-                        Text("60 fps", color = Color.White)
+                        Text("60 fps", color = sixtyColor,
+                            fontWeight = if (fpsState.value.sixty) FontWeight.Bold else FontWeight.Normal)
                     }
+                    val thirtyColor = if (fpsState.value.thirty)
+                        MaterialTheme.colorScheme.secondary
+                    else
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.28f)
+
                     Column(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -225,15 +226,11 @@ fun VideoFpsSettings(
                         Icon(
                             Icons.Default.AutoAwesomeMotion,
                             contentDescription = "30fps",
-                            tint = if (fpsState.value.thirty) {
-                                Color.Blue
-                            } else {
-                                Color.White
-                            },
-                            modifier = Modifier
-                                .size(38.dp)
+                            tint = thirtyColor,
+                            modifier = Modifier.size(38.dp)
                         )
-                        Text("30 fps", color = Color.White)
+                        Text("30 fps", color = thirtyColor,
+                            fontWeight = if (fpsState.value.thirty) FontWeight.Bold else FontWeight.Normal)
                     }
                 }
             }
@@ -262,7 +259,7 @@ fun VideoQualitySettings(
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Quality", color = MaterialTheme.colors.onPrimary)
+            Text("Quality", color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.fillMaxWidth(fraction = 0.4f))
 
             Row(
@@ -272,6 +269,11 @@ fun VideoQualitySettings(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
+                    val ultraColor = if (qualityState.value.ultraHd)
+                        MaterialTheme.colorScheme.secondary
+                    else
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+
                     Column(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -284,16 +286,16 @@ fun VideoQualitySettings(
                         Icon(
                             Icons.Default.Hd,
                             contentDescription = "4k",
-                            tint = if (qualityState.value.ultraHd) {
-                                Color.Blue
-                            } else {
-                                Color.White
-                            },
-                            modifier = Modifier
-                                .size(38.dp)
+                            tint = ultraColor,
+                            modifier = Modifier.size(38.dp)
                         )
-                        Text("4K", color = Color.White)
+                        Text("4K", color = ultraColor,
+                            fontWeight = if (qualityState.value.ultraHd) FontWeight.Bold else FontWeight.Normal)
                     }
+                    val fullColor = if (qualityState.value.fullHd)
+                        MaterialTheme.colorScheme.secondary
+                    else
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.28f)
                     Column(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -306,16 +308,17 @@ fun VideoQualitySettings(
                         Icon(
                             Icons.Default.Hd,
                             contentDescription = "1080p",
-                            tint = if (qualityState.value.fullHd) {
-                                Color.Blue
-                            } else {
-                                Color.White
-                            },
-                            modifier = Modifier
-                                .size(38.dp)
+                            tint = fullColor,
+                            modifier = Modifier.size(38.dp)
                         )
-                        Text("1080p", color = Color.White)
+                        Text("1080p", color = fullColor,
+                            fontWeight = if (qualityState.value.fullHd) FontWeight.Bold else FontWeight.Normal)
                     }
+
+                    val hdColor = if (qualityState.value.hd)
+                        MaterialTheme.colorScheme.secondary
+                    else
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.28f)
                     Column(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -328,15 +331,11 @@ fun VideoQualitySettings(
                         Icon(
                             Icons.Default.Hd,
                             contentDescription = "720p",
-                            tint = if (qualityState.value.hd) {
-                                Color.Blue
-                            } else {
-                                Color.White
-                            },
-                            modifier = Modifier
-                                .size(38.dp)
+                            tint = hdColor,
+                            modifier = Modifier.size(38.dp)
                         )
-                        Text("720p", color = Color.White)
+                        Text("720p", color = hdColor,
+                            fontWeight = if (qualityState.value.hd) FontWeight.Bold else FontWeight.Normal)
                     }
                 }
             }

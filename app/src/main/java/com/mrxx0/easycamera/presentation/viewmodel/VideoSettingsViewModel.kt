@@ -47,7 +47,6 @@ class VideoSettingsViewModel @Inject constructor(
     private var flash = mutableStateOf(false)
     var flashState = mutableStateOf(FlashState(off = true, on = false))
 
-
     fun takeVideo(
         context: Context,
         lastImageUri: MutableState<Uri?>,

@@ -5,6 +5,12 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,17 +31,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
-import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.HideImage
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.rememberBottomSheetScaffoldState
+import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -47,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -99,8 +107,7 @@ fun CameraPreview(
 
     BottomSheetScaffold(
         modifier = Modifier
-            .background(Color.Black)
-            .padding(10.dp),
+            .background(MaterialTheme.colorScheme.onBackground),
         scaffoldState = scaffoldState,
         sheetPeekHeight = 0.dp,
         sheetContent = {
@@ -190,9 +197,6 @@ fun CameraPreview(
                         )
                         .width(screenWidth)
                         .fillMaxHeight()
-                        .clip(
-                            RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp)
-                        )
                         .background(Color.Black)
                 )
                 if (showCard.value && !viewModel.videoRecording) {
@@ -221,13 +225,11 @@ fun ControlZone(
     showCard: MutableState<Boolean>,
     modifier: Modifier
 ) {
-
     val lastImageUri = remember { mutableStateOf(viewModel.getLastImageUri(context)) }
     val cameraMode = remember { mutableStateOf(viewModel.getMode()) }
 
     Column(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Bottom
     ) {
@@ -242,6 +244,7 @@ fun ControlZone(
                 .background(Color.Black)
                 .padding(start = 70.dp, end = 70.dp, top = 32.dp)
         }
+
         Row(
             modifier = modifierRow,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -249,25 +252,43 @@ fun ControlZone(
         ) {
             PreviewLastTakenImage(lastImageUri, viewModel, context)
             ShutterButton(context, viewModel, lastImageUri, cameraMode.value)
+
+            val interactionSource = remember { MutableInteractionSource() }
+            val isPressed by interactionSource.collectIsPressedAsState()
+
+            val scale by animateFloatAsState(
+                targetValue = if (isPressed) 0.85f else 1f,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+            )
+
             OutlinedButton(
                 onClick = {
                     if (!viewModel.videoRecording) {
                         viewModel.switchCamera(lifecycleOwner, viewModel.cameraMode)
                     }
                 },
-                modifier = Modifier.size(50.dp),
+                modifier = Modifier
+                    .size(50.dp)
+                    .scale(scale),
                 shape = CircleShape,
-                border = BorderStroke(2.dp, Color.White),
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.onSurface),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ),
                 contentPadding = PaddingValues(8.dp),
+                interactionSource = interactionSource,
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
                 Icon(
                     Icons.Default.Cameraswitch,
                     contentDescription = "Switch camera",
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(30.dp)
                 )
             }
         }
+
         val modifierColumn = if (viewModel.fullscreen.value) {
             Modifier
                 .fillMaxWidth()
@@ -277,12 +298,15 @@ fun ControlZone(
                 .fillMaxWidth()
                 .background(Color.Black)
         }
-        ImageModeSwitch(modifier = modifierColumn,
+
+        ImageModeSwitch(
+            modifier = modifierColumn,
             lifecycleOwner = lifecycleOwner,
             showCard = showCard,
             viewModel = viewModel,
             cameraMode = cameraMode,
-            screeHeight = screeHeight)
+            screenHeight = screeHeight
+        )
     }
 }
 
@@ -293,7 +317,7 @@ fun ImageModeSwitch(
     showCard: MutableState<Boolean>,
     viewModel: MainViewModel,
     cameraMode: MutableState<Boolean>,
-    screeHeight: Dp
+    screenHeight: Dp
 ) {
     Column(
         modifier = modifier,
@@ -301,7 +325,7 @@ fun ImageModeSwitch(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Column(
-            modifier = modifier.height(screeHeight* 0.2f),
+            modifier = modifier.height(screenHeight * 0.2f),
             verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -310,19 +334,32 @@ fun ImageModeSwitch(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val photoInteractionSource = remember { MutableInteractionSource() }
+                val photoPressed by photoInteractionSource.collectIsPressedAsState()
+                val photoScale by animateFloatAsState(
+                    targetValue = if (photoPressed) 0.8f else 1f,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+                )
+                val photoColor by animateColorAsState(
+                    targetValue = when {
+                        showCard.value -> Color.Gray
+                        viewModel.cameraMode -> Color.DarkGray
+                        else -> Color.White
+                    },
+                    animationSpec = tween(300)
+                )
+
                 Icon(
                     Icons.Default.PhotoCamera,
                     contentDescription = "Switch to image mode",
-                    tint = if (showCard.value) {
-                        Color.Gray
-                    } else if (viewModel.cameraMode) {
-                        Color.DarkGray
-                    } else {
-                        Color.White
-                    },
+                    tint = photoColor,
                     modifier = Modifier
                         .size(24.dp)
-                        .clickable {
+                        .scale(photoScale)
+                        .clickable(
+                            interactionSource = photoInteractionSource,
+                            indication = rememberRipple(bounded = false, radius = 24.dp)
+                        ) {
                             if (!showCard.value && !viewModel.cameraMode) {
                                 viewModel.setMode(true)
                                 cameraMode.value = true
@@ -330,20 +367,35 @@ fun ImageModeSwitch(
                             }
                         }
                 )
+
                 Spacer(modifier = Modifier.size(15.dp))
+
+                val videoInteractionSource = remember { MutableInteractionSource() }
+                val videoPressed by videoInteractionSource.collectIsPressedAsState()
+                val videoScale by animateFloatAsState(
+                    targetValue = if (videoPressed) 0.8f else 1f,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+                )
+                val videoColor by animateColorAsState(
+                    targetValue = when {
+                        showCard.value -> Color.Gray
+                        !viewModel.cameraMode -> Color.DarkGray
+                        else -> Color.White
+                    },
+                    animationSpec = tween(300)
+                )
+
                 Icon(
                     Icons.Default.Videocam,
                     contentDescription = "Switch to video mode",
-                    tint = if (showCard.value) {
-                        Color.Gray
-                    } else if (!viewModel.cameraMode) {
-                        Color.DarkGray
-                    } else {
-                        Color.White
-                    },
+                    tint = videoColor,
                     modifier = Modifier
                         .size(30.dp)
-                        .clickable {
+                        .scale(videoScale)
+                        .clickable(
+                            interactionSource = videoInteractionSource,
+                            indication = rememberRipple(bounded = false, radius = 24.dp)
+                        ) {
                             if (!showCard.value && viewModel.cameraMode) {
                                 viewModel.setMode(false)
                                 cameraMode.value = false
@@ -356,6 +408,7 @@ fun ImageModeSwitch(
     }
 }
 
+
 @Composable
 fun ShutterButton(
     context: Context,
@@ -363,42 +416,57 @@ fun ShutterButton(
     lastImageUri: MutableState<Uri?>,
     cameraMode: Boolean
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
 
-    val shutterInteractionSource = remember { MutableInteractionSource() }
-    val isShutterPressed by shutterInteractionSource.collectIsPressedAsState()
-    val shutterButtonColor = if (isShutterPressed) {
-        Color.DarkGray
-    } else {
-        if (cameraMode) {
-            Color.White
-        } else {
-            Color.Red
-        }
-    }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.9f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+    )
+
+    val animatedColor by animateColorAsState(
+        targetValue = if (cameraMode)
+            MaterialTheme.colorScheme.onSurface
+        else
+            MaterialTheme.colorScheme.error,
+        animationSpec = tween(durationMillis = 300, easing = LinearOutSlowInEasing)
+    )
 
     OutlinedButton(
-        onClick = {
-            if (cameraMode) {
-                viewModel.takeImage(context, lastImageUri, viewModel.mainTimer)
-            } else {
-                viewModel.takeVideo(context, lastImageUri, viewModel)
-            }
-
-        },
-        modifier = Modifier.size(70.dp),
+        onClick = {},
+        enabled = false,
+        border = BorderStroke(3.dp, MaterialTheme.colorScheme.outlineVariant),
         shape = CircleShape,
-        border = BorderStroke(2.dp, Color.White),
-        contentPadding = PaddingValues(4.dp),
-        interactionSource = shutterInteractionSource
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.onSurface,
+            contentColor = Color.Transparent
+        ),
+        modifier = Modifier
+            .size(80.dp)
+            .scale(scale),
+        contentPadding = PaddingValues(0.dp)
     ) {
-        Icon(
-            Icons.Default.Circle,
-            contentDescription = "Shutter button",
-            tint = shutterButtonColor,
-            modifier = Modifier.size(80.dp)
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .background(
+                    color = animatedColor,
+                    shape = CircleShape
+                )
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = rememberRipple(bounded = false, radius = 40.dp)
+                ) {
+                    if (cameraMode) {
+                        viewModel.takeImage(context, lastImageUri, viewModel.mainTimer)
+                    } else {
+                        viewModel.takeVideo(context, lastImageUri, viewModel)
+                    }
+                }
         )
     }
 }
+
 
 @Composable
 fun PreviewLastTakenImage(
@@ -406,18 +474,35 @@ fun PreviewLastTakenImage(
     viewModel: MainViewModel,
     context: Context
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.85f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+    )
+
     OutlinedButton(
-        onClick = { },
-        modifier = Modifier.size(50.dp),
+        onClick = {  },
+        modifier = Modifier
+            .size(50.dp)
+            .scale(scale),
         shape = CircleShape,
         border = BorderStroke(2.dp, Color.White),
         contentPadding = PaddingValues(1.dp),
+        interactionSource = interactionSource,
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
     ) {
         if (lastImageUri.value != null) {
             val imageLoader = ImageLoader.Builder(context)
                 .components {
                     add(VideoFrameDecoder.Factory())
-                }.crossfade(true)
+                }
+                .crossfade(true)
                 .build()
             val painter = rememberAsyncImagePainter(
                 model = lastImageUri.value!!,
@@ -425,12 +510,15 @@ fun PreviewLastTakenImage(
             )
             Image(
                 painter = painter,
-                contentDescription = "last taken image",
+                contentDescription = "Last taken image",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(54.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
-                    .clickable {
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = rememberRipple(bounded = true, radius = 28.dp)
+                    ) {
                         viewModel.openGallery(lastImageUri, context)
                     }
             )
